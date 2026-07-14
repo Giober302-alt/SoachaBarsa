@@ -19,8 +19,8 @@ let coaches = [];
 let students = [];
 let openId = null;
 
-const STATUS_LABEL = { pending: 'Pendiente', accepted: 'Aceptado', rejected: 'Rechazado' };
-const STATUS_BADGE = { pending: 'badge-pending', accepted: 'badge-paid', rejected: 'badge-overdue' };
+const STATUS_LABEL = { pending: 'Pendiente', accepted: 'Aprobado', rejected: 'Rechazado', cancelled: 'Cancelado' };
+const STATUS_BADGE = { pending: 'badge-pending', accepted: 'badge-paid', rejected: 'badge-overdue', cancelled: 'badge-excused' };
 
 const init = async () => {
   showLoader('Cargando torneos…');
@@ -74,6 +74,7 @@ const render = () => {
       <div class="card-body-bara" id="body-${t.id}" style="display:${openId === t.id ? 'block' : 'none'}">
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:16px">
           ${field('Fecha', formatDate(t.date))}
+          ${t.callTime ? field('Hora de convocatoria', t.callTime) : ''}
           ${field('Categoría', catName(t.categoryId))}
           ${field('Sede', t.venue || '—')}
           ${field('Entrenadores supervisores', (t.coachEmails || []).join(', ') || '—')}
@@ -199,7 +200,9 @@ const openForm = (existing = null) => {
         </div>
         <label class="form-label-bara">Sede</label>
         <input id="swalVenue" class="form-control-bara swal2-input" style="margin:0 0 12px" value="${existing ? escapeHtml(existing.venue || '') : ''}">
-        <label class="form-label-bara">Descripción</label>
+        <label class="form-label-bara">Hora de convocatoria <span style="font-weight:400;color:var(--text-muted)">(opcional)</span></label>
+        <input id="swalCallTime" class="form-control-bara swal2-input" style="margin:0 0 12px" placeholder="Ej: 7:00 am en la sede" value="${existing ? escapeHtml(existing.callTime || '') : ''}">
+        <label class="form-label-bara">Descripción / reglamento</label>
         <textarea id="swalDescription" class="form-control-bara swal2-textarea" style="margin:0 0 12px">${existing ? escapeHtml(existing.description || '') : ''}</textarea>
         <label class="form-label-bara">Entrenadores que supervisan</label>
         <div style="border:1.5px solid var(--border-color);border-radius:10px;padding:8px 14px;max-height:120px;overflow-y:auto">
@@ -219,6 +222,7 @@ const openForm = (existing = null) => {
         date: Timestamp.fromDate(new Date(dateVal + 'T00:00:00')),
         categoryId: document.getElementById('swalCategory').value || null,
         venue: document.getElementById('swalVenue').value.trim(),
+        callTime: document.getElementById('swalCallTime').value.trim(),
         description: document.getElementById('swalDescription').value.trim(),
         coachEmails: Array.from(document.querySelectorAll('.swalCoachChk:checked')).map(el => el.value).filter(Boolean)
       };

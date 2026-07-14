@@ -60,8 +60,14 @@ const init = async () => {
   renderGeneral();
   renderMedical();
   renderContact();
-  await Promise.all([renderDocuments(), renderPhotos(), renderPerformance(), renderPayments()]);
+  await Promise.all([renderDocuments(), renderPhotos(), renderPerformance(), renderPayments(), renderChangeLog()]);
   hideLoader();
+
+  const requestedTab = params.get('tab');
+  if (requestedTab) {
+    const btn = document.querySelector(`.dtab-btn[data-tab="${requestedTab}"]`);
+    btn?.click();
+  }
 };
 
 const showError = (msg) => {
@@ -237,6 +243,8 @@ const openMedicalForm = () => {
     student.medical = res.value.medical;
     toast('Ficha médica actualizada', 'success');
     renderMedical();
+    logChange(`${profile.role === 'parent' ? 'El padre/madre' : 'Staff'} actualizó la ficha médica`);
+    renderChangeLog();
   });
 };
 
@@ -257,6 +265,10 @@ const renderContact = () => {
         ${field('Teléfono del acudiente (WhatsApp)', student.parentPhone || '—')}
         ${field('Personas autorizadas para recoger', c.authorizedPickup || '—')}
       </div>
+    </div>
+    <div class="card-bara" style="padding:20px;margin-top:14px">
+      <p style="font-weight:700;font-size:13px;margin-bottom:8px"><i class="fas fa-clock-rotate-left"></i> Historial de cambios</p>
+      <div id="changeLogList"><p style="font-size:12px;color:var(--text-muted)">Cargando…</p></div>
     </div>`;
   document.getElementById('btnEditContact')?.addEventListener('click', openContactForm);
 };
@@ -293,6 +305,8 @@ const openContactForm = () => {
     student.parentPhone = res.value.parentPhone;
     toast('Datos actualizados', 'success');
     renderContact();
+    logChange(`${profile.role === 'parent' ? 'El padre/madre' : 'Staff'} actualizó contacto/información adicional`);
+    renderChangeLog();
   });
 };
 
@@ -544,6 +558,27 @@ const openPaymentForm = () => {
     }
     renderPayments();
   });
+};
+
+const logChange = async (summary) => {
+  try {
+    await addDoc(collection(db, 'studentChangeLog'), {
+      studentId, summary, changedBy: profile.displayName || profile.email || 'Padre/Madre',
+      changedByRole: profile.role, createdAt: serverTimestamp()
+    });
+  } catch (err) { console.error('[alumno-detalle] No se pudo registrar el cambio:', err); }
+};
+
+const renderChangeLog = async () => {
+  const el = document.getElementById('changeLogList');
+  if (!el) return;
+  const snap = await getDocs(query(collection(db, 'studentChangeLog'), where('studentId', '==', studentId), orderBy('createdAt', 'desc')));
+  const list = snap.docs.map(d => ({ id: d.id, ...d.data() })).slice(0, 10);
+  if (list.length === 0) { el.innerHTML = `<p style="font-size:12px;color:var(--text-muted)">Sin cambios registrados todavía.</p>`; return; }
+  el.innerHTML = list.map(l => `<div style="padding:8px 0;border-bottom:1px solid var(--border-color)">
+    <p style="font-size:12.5px">${escapeHtml(l.summary || '')}</p>
+    <p style="font-size:11px;color:var(--text-muted);margin-top:2px">${escapeHtml(l.changedBy || '')} · ${formatDate(l.createdAt)}</p>
+  </div>`).join('');
 };
 
 const escapeHtml = (s = '') => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));

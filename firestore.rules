@@ -9,7 +9,7 @@ service cloud.firestore {
 
     function isSignedIn() { return request.auth != null; }
     function myRole() {
-      return isSignedIn()
+      return (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)))
         ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
         : null;
     }
@@ -84,7 +84,10 @@ service cloud.firestore {
     match /tournamentRegistrations/{id} {
       allow read:   if isStaff() || isParentOfDoc(resource.data.studentId);
       allow create: if isCoordinator() || isParentOfDoc(request.resource.data.studentId);
-      allow update: if isCoordinator() || isSupervisor(resource.data.tournamentId);
+      allow update: if isCoordinator() || isSupervisor(resource.data.tournamentId)
+        || (isParentOfDoc(resource.data.studentId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+            && request.resource.data.status == 'cancelled');
       allow delete: if isCoordinator() || isParentOfDoc(resource.data.studentId);
     }
     match /tournamentUpdates/{id} {
@@ -113,6 +116,10 @@ service cloud.firestore {
     match /performanceNotes/{id} {
       allow read:  if isStaff() || isParentOfDoc(resource.data.studentId);
       allow write: if isStaff();
+    }
+    match /studentChangeLog/{id} {
+      allow read:   if isStaff() || isParentOfDoc(resource.data.studentId);
+      allow create: if isCoordinator() || isParentOfDoc(request.resource.data.studentId);
     }
 
     // ── Comunicación y notificaciones ──────────────────────────────────────

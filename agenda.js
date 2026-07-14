@@ -31,6 +31,9 @@ const init = async () => {
 
 const toDate = (ts) => ts?.toDate ? ts.toDate() : new Date(ts || 0);
 
+const UNIFORM_LABEL = { training: 'Entrenamiento', presentation: 'Presentación', goalkeeper: 'Arquero', tournament: 'Torneo', other: 'Otro' };
+const UNIFORM_COLOR = { training: '#0dcaf0', presentation: 'var(--color-gold)', goalkeeper: '#9c27b0', tournament: '#8B0000', other: 'var(--text-muted)' };
+
 const typeBadge = (t) => {
   const map = { Entrenamiento: 'badge-arrived', Partido: 'badge-pending', Reunión: 'badge-excused' };
   return map[t] || 'badge-arrived';
@@ -53,6 +56,8 @@ const render = (list) => {
       <div style="flex:1;min-width:0">
         <p style="font-weight:600;font-size:14px">${ev.cancelled ? '<span style="text-decoration:line-through;color:var(--text-muted)">' + escapeHtml(ev.title || '—') + '</span>' : escapeHtml(ev.title || '—')}</p>
         <p style="font-size:12px;color:var(--text-muted)"><i class="fas fa-clock"></i> ${d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})} · ${escapeHtml(ev.venue || '')}${ev.court ? ' · Cancha ' + escapeHtml(ev.court) : ''}</p>
+        ${ev.uniform ? `<span class="badge-status" style="background:${UNIFORM_COLOR[ev.uniform]}22;color:${UNIFORM_COLOR[ev.uniform]};margin-top:6px;display:inline-block"><i class="fas fa-tshirt"></i> ${UNIFORM_LABEL[ev.uniform] || ev.uniform}</span>` : ''}
+        ${ev.notes ? `<p style="font-size:12px;color:var(--text-secondary);margin-top:6px"><i class="fas fa-circle-info"></i> ${escapeHtml(ev.notes)}</p>` : ''}
       </div>
       ${ev.cancelled ? `<span class="badge-status badge-overdue">Cancelado</span>` : `<span class="badge-status ${typeBadge(ev.type)}">${escapeHtml(ev.type || 'Entrenamiento')}</span>`}
       <button class="btn-outline-bara" style="padding:6px 10px" data-edit="${ev.id}"><i class="fas fa-pen"></i></button>
@@ -96,7 +101,13 @@ const openForm = (existing = null) => {
           <div style="flex:1"><label class="form-label-bara">Hora</label>
           <input id="swalTime" type="time" class="form-control-bara swal2-input" style="margin:0" value="${timeStr}"></div>
         </div>
-        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);margin-top:12px">
+        <label class="form-label-bara">Uniforme</label>
+        <select id="swalUniform" class="form-control-bara swal2-input" style="margin:0 0 12px">
+          ${Object.entries(UNIFORM_LABEL).map(([k, v]) => `<option value="${k}" ${existing?.uniform === k ? 'selected' : ''}>${v}</option>`).join('')}
+        </select>
+        <label class="form-label-bara">Observaciones <span style="font-weight:400;color:var(--text-muted)">(implementos, recomendaciones)</span></label>
+        <textarea id="swalNotes" class="form-control-bara swal2-textarea" style="margin:0 0 12px">${existing ? escapeHtml(existing.notes || '') : ''}</textarea>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);margin-top:0">
           <input id="swalCancelled" type="checkbox" ${existing?.cancelled ? 'checked' : ''}> Marcar como cancelado
         </label>
       </div>`,
@@ -116,17 +127,23 @@ const openForm = (existing = null) => {
         venue: document.getElementById('swalVenue').value.trim(),
         court: document.getElementById('swalCourt').value.trim(),
         location: document.getElementById('swalVenue').value.trim(),
+        uniform: document.getElementById('swalUniform').value,
+        notes: document.getElementById('swalNotes').value.trim(),
         cancelled: document.getElementById('swalCancelled').checked,
         startTime: Timestamp.fromDate(new Date(`${date}T${time}:00`))
       };
     }
   }).then(async (res) => {
     if (!res.isConfirmed) return;
-    if (existing) { await updateDocument(COLLECTIONS.SCHEDULES, existing.id, res.value); toast('Evento actualizado', 'success'); }
-    else {
+    if (existing) {
+      await updateDocument(COLLECTIONS.SCHEDULES, existing.id, res.value);
+      toast('Evento actualizado', 'success');
+      notify({ audience: 'parents', title: res.value.cancelled ? 'Entrenamiento cancelado' : 'Cambio en la agenda', body: `${res.value.title} · ${UNIFORM_LABEL[res.value.uniform] || ''}` });
+      notify({ audience: 'coaches', title: res.value.cancelled ? 'Entrenamiento cancelado' : 'Cambio en la agenda', body: `${res.value.title}` });
+    } else {
       await createDocument(COLLECTIONS.SCHEDULES, res.value);
       toast('Evento creado', 'success');
-      notify({ audience: 'parents', title: 'Nuevo evento en la agenda', body: `${res.value.title} · ${res.value.venue || ''}` });
+      notify({ audience: 'parents', title: 'Nuevo evento en la agenda', body: `${res.value.title} · ${res.value.venue || ''} · Uniforme: ${UNIFORM_LABEL[res.value.uniform] || ''}` });
       notify({ audience: 'coaches', title: 'Nuevo evento en la agenda', body: `${res.value.title} · ${res.value.venue || ''}` });
     }
   });

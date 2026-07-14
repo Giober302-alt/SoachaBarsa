@@ -6,7 +6,7 @@
 import { requireAuth, logout } from './auth.js';
 import { getCollection, formatDate, formatCOP, getGreeting, applyTheme, AppState, toast } from './app.js';
 import { COLLECTIONS, db } from './firebase-config.js';
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
+import { collection, query, where, getDocs, addDoc, doc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 import { renderNotificationBell } from './notifications.js';
 
 const STATUS_LABEL = { paid: 'Pagado', pending: 'Pendiente', overdue: 'Vencido', arrived: 'Presente', late: 'Tarde', absent: 'Ausente', excused: 'Excusa' };
@@ -80,6 +80,9 @@ const fetchByStudentIds = async (colName, ids) => {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 };
 
+const UNIFORM_LABEL = { training: 'Entrenamiento', presentation: 'Presentación', goalkeeper: 'Arquero', tournament: 'Torneo', other: 'Otro' };
+const UNIFORM_COLOR = { training: '#0dcaf0', presentation: 'var(--color-gold)', goalkeeper: '#9c27b0', tournament: '#8B0000', other: 'var(--text-muted)' };
+
 const renderUpcomingSchedules = async () => {
   const el = document.getElementById('parentAgenda');
   const schedules = await getCollection(COLLECTIONS.SCHEDULES);
@@ -100,6 +103,8 @@ const renderUpcomingSchedules = async () => {
       <div class="event-details">
         <p class="ev-title">${ev.cancelled ? '<span style="text-decoration:line-through;color:var(--text-muted)">' + escapeHtml(ev.title || '') + '</span> — cancelado' : escapeHtml(ev.title || '')}</p>
         <span class="ev-meta"><i class="fas fa-clock"></i> ${ev.d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})} · ${escapeHtml(ev.venue || ev.location || '')}${ev.court ? ' · Cancha ' + escapeHtml(ev.court) : ''}</span>
+        ${ev.uniform ? `<div style="margin-top:6px"><span class="badge-status" style="background:${UNIFORM_COLOR[ev.uniform]}22;color:${UNIFORM_COLOR[ev.uniform]}"><i class="fas fa-tshirt"></i> ${UNIFORM_LABEL[ev.uniform] || ev.uniform}</span></div>` : ''}
+        ${ev.notes ? `<p style="font-size:11.5px;color:var(--text-secondary);margin-top:6px"><i class="fas fa-circle-info"></i> ${escapeHtml(ev.notes)}</p>` : ''}
       </div>
     </div>`).join('');
 };
@@ -121,9 +126,21 @@ const renderChildren = (students, catName, coachName, attendance, payments) => {
         <div style="flex:1;min-width:0">
           <p style="font-weight:700;font-size:16px">${escapeHtml(s.displayName || '—')}</p>
           <p style="font-size:12px;color:var(--text-muted)">${escapeHtml(catNamesFor(s))} · Entrenador: ${escapeHtml(coachName(s.coachId))}</p>
+          <p style="font-size:11.5px;color:var(--text-muted);margin-top:2px">${escapeHtml(s.documentType || '')} ${escapeHtml(s.documentNumber || '')}</p>
         </div>
+        <a href="./alumno-detalle.html?id=${s.id}&tab=contact" class="btn-outline-bara" style="padding:7px 12px"><i class="fas fa-pen"></i> Editar información</a>
         <a href="./alumno-detalle.html?id=${s.id}" class="btn-outline-bara" style="padding:7px 12px"><i class="fas fa-id-card"></i> Ver ficha completa</a>
       </div>
+
+      ${(s.medical?.bloodType || s.medical?.allergies || s.medical?.emergencyContact) ? `
+      <div class="card-bara" style="padding:12px 14px;margin-bottom:16px;background:var(--color-primary-10);border-color:var(--color-primary-20)">
+        <p style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--color-primary);margin-bottom:6px"><i class="fas fa-notes-medical"></i> Información médica</p>
+        <p style="font-size:12.5px;color:var(--text-secondary)">
+          ${s.medical?.bloodType ? `Sangre: <strong>${escapeHtml(s.medical.bloodType)}</strong> · ` : ''}
+          ${s.medical?.allergies ? `Alergias: ${escapeHtml(s.medical.allergies)} · ` : ''}
+          ${s.medical?.emergencyContact ? `Emergencia: ${escapeHtml(s.medical.emergencyContact)} ${s.medical.emergencyPhone ? '(' + escapeHtml(s.medical.emergencyPhone) + ')' : ''}` : ''}
+        </p>
+      </div>` : ''}
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px">
         <div class="card-bara" style="padding:14px;text-align:center">
@@ -175,8 +192,8 @@ const renderAnnouncements = (list) => {
 
 const escapeHtml = (s = '') => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-const TSTATUS_LABEL = { pending: 'Pendiente', accepted: 'Aceptado', rejected: 'Rechazado' };
-const TSTATUS_BADGE = { pending: 'badge-pending', accepted: 'badge-paid', rejected: 'badge-overdue' };
+const TSTATUS_LABEL = { pending: 'Pendiente', accepted: 'Aprobado', rejected: 'Rechazado', cancelled: 'Cancelado' };
+const TSTATUS_BADGE = { pending: 'badge-pending', accepted: 'badge-paid', rejected: 'badge-overdue', cancelled: 'badge-excused' };
 
 const renderTournaments = async (students, studentIds) => {
   const el = document.getElementById('parentTournaments');
@@ -190,14 +207,18 @@ const renderTournaments = async (students, studentIds) => {
   el.innerHTML = sorted.map(t => `
     <div class="card-bara" style="padding:16px 20px;margin-bottom:12px">
       <p style="font-weight:700;font-size:14px"><i class="fas fa-trophy" style="color:var(--color-gold);margin-right:6px"></i>${escapeHtml(t.name || '')}</p>
-      <p style="font-size:12px;color:var(--text-muted);margin:4px 0 10px">${formatDate(t.date)} · ${escapeHtml(t.venue || '')}</p>
+      <p style="font-size:12px;color:var(--text-muted);margin:4px 0 6px">${formatDate(t.date)} · ${escapeHtml(t.venue || '')}${t.callTime ? ' · Convocatoria: ' + escapeHtml(t.callTime) : ''}</p>
+      ${t.description ? `<p style="font-size:12.5px;color:var(--text-secondary);margin-bottom:10px;white-space:pre-wrap">${escapeHtml(t.description)}</p>` : ''}
       <div style="display:flex;flex-direction:column;gap:8px">
         ${students.map(s => {
           const reg = regs.find(r => r.tournamentId === t.id && r.studentId === s.id);
-          return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px">
+          return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;gap:8px">
             <span>${escapeHtml(s.displayName)}</span>
             ${reg
-              ? `<span class="badge-status ${TSTATUS_BADGE[reg.status] || 'badge-pending'}">${TSTATUS_LABEL[reg.status] || reg.status}</span>`
+              ? `<span style="display:flex;align-items:center;gap:8px">
+                  <span class="badge-status ${TSTATUS_BADGE[reg.status] || 'badge-pending'}">${TSTATUS_LABEL[reg.status] || reg.status}</span>
+                  ${['pending','accepted'].includes(reg.status) ? `<button class="btn-outline-bara" style="padding:4px 9px;font-size:11.5px;color:#dc3545;border-color:#dc3545" data-cancel="${reg.id}">Cancelar</button>` : ''}
+                </span>`
               : `<button class="btn-outline-bara" style="padding:5px 10px" data-register="${t.id}|${s.id}">Inscribir</button>`}
           </div>`;
         }).join('')}
@@ -212,6 +233,12 @@ const renderTournaments = async (students, studentIds) => {
       status: 'pending', createdAt: serverTimestamp()
     });
     toast('Inscripción enviada. Queda pendiente de aceptación.', 'success');
+    renderTournaments(students, studentIds);
+  }));
+
+  el.querySelectorAll('[data-cancel]').forEach(btn => btn.addEventListener('click', async () => {
+    await updateDoc(doc(db, 'tournamentRegistrations', btn.dataset.cancel), { status: 'cancelled', updatedAt: serverTimestamp() });
+    toast('Inscripción cancelada', 'success');
     renderTournaments(students, studentIds);
   }));
 };
