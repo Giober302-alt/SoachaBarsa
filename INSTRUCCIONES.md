@@ -192,6 +192,30 @@ cuentas de Firebase Authentication solo las crea un administrador desde
 dile a un desarrollador que reemplace esa regla por una Cloud Function
 con permisos de administrador (no es necesario para operar con normalidad).
 
+## Paso 10 — Ficha completa del alumno, documentos, fotos y notificaciones
+
+- **Ficha del alumno** (`alumno-detalle.html?id=...`, enlace "🪪" desde Alumnos,
+  Portal de Padres y Panel del entrenador): pestañas General, Médica,
+  Documentos, Fotos, Rendimiento y Contacto. Admin/coordinador editan todo;
+  el entrenador solo publica en "Rendimiento"; el padre edita "Contacto" y
+  "Médica" y sube documentos/fotos — todo reforzado por `firestore.rules` y
+  `storage.rules` (un padre nunca puede ver ni tocar la ficha de otro alumno).
+- **Documentos y fotos** se guardan en Firebase Storage, dentro de
+  `students/{id}/documentos` y `students/{id}/fotos` — ya activado en el
+  Paso 1, sin configuración adicional. Cada archivo pesa máx. 8 MB.
+- **Entrenador asignado por alumno**: en la ficha → pestaña General → Editar.
+- **Agenda** ahora tiene sede, cancha y la opción de marcar un evento como
+  cancelado (se ve tachado en rojo para entrenadores y padres).
+- **Pagos** ahora admite fecha de vencimiento y subir el comprobante; el
+  padre lo ve con semáforo 🟢 al día / 🟡 próximo a vencer / 🔴 vencido.
+- **Notificaciones**: cada evento nuevo, comunicado, pago y marca de
+  asistencia genera una notificación interna (campanita) para el entrenador
+  y/o el padre correspondiente. Junto a cada una hay un botón de WhatsApp
+  que abre un mensaje prellenado — **el envío es manual, con un clic**:
+  automatizar el envío sin que alguien lo apruete requiere un proveedor de
+  pago (Twilio o la API de Meta para WhatsApp Business), así que no está
+  incluido para mantener el proyecto 100% gratis.
+
 ### Resumen de costos
 Con el plan gratuito (Spark) de Firebase tienes, por mes: 50,000 lecturas y
 20,000 escrituras diarias en Firestore, 10 GB de transferencia en Hosting y

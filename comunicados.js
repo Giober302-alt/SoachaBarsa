@@ -8,6 +8,7 @@ import {
   createDocument, updateDocument, deleteDocument, subscribeCollection, formatDate, truncate
 } from './app.js';
 import { COLLECTIONS } from './firebase-config.js';
+import { notify } from './notifications.js';
 
 let announcements = [];
 
@@ -87,7 +88,11 @@ const openForm = (existing = null) => {
   }).then(async (res) => {
     if (!res.isConfirmed) return;
     if (existing) { await updateDocument(COLLECTIONS.ANNOUNCEMENTS, existing.id, res.value); toast('Comunicado actualizado', 'success'); }
-    else { await createDocument(COLLECTIONS.ANNOUNCEMENTS, res.value); toast('Comunicado publicado', 'success'); }
+    else {
+      await createDocument(COLLECTIONS.ANNOUNCEMENTS, res.value);
+      toast('Comunicado publicado', 'success');
+      notify({ audience: 'parents', title: res.value.title, body: res.value.body });
+    }
   });
 };
 

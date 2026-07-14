@@ -1,17 +1,33 @@
 rules_version = '2';
 
 // Storage — Barsa Soacha Academy
-// Fotos de perfil, comprobantes de pago, imágenes de comunicados, etc.
+// Documentos y fotos de cada alumno viven en students/{studentId}/...
 service firebase.storage {
   match /b/{bucket}/o {
 
     function isSignedIn() { return request.auth != null; }
+    function myRole() {
+      return isSignedIn()
+        ? firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role
+        : null;
+    }
+    function isStaff() { return myRole() in ['admin', 'coordinator', 'coach']; }
+    function isParentOf(studentId) {
+      return myRole() == 'parent' &&
+        firestore.get(/databases/(default)/documents/students/$(studentId)).data.parentEmail == request.auth.token.email;
+    }
 
-    // Cualquier persona autenticada puede ver los archivos de la app
-    // (fotos de alumnos, logo, adjuntos de comunicados).
+    // Documentos y fotos de un alumno específico.
+    match /students/{studentId}/{allPaths=**} {
+      allow read:  if isSignedIn() && (isStaff() || isParentOf(studentId));
+      allow write: if isSignedIn() && request.resource.size < 8 * 1024 * 1024
+                   && (isStaff() || isParentOf(studentId));
+    }
+
+    // Resto de archivos de la app (logo, comprobantes sueltos, etc.)
     match /{allPaths=**} {
       allow read:  if isSignedIn();
-      allow write: if isSignedIn() && request.resource.size < 5 * 1024 * 1024; // 5MB máx.
+      allow write: if isSignedIn() && request.resource.size < 5 * 1024 * 1024;
     }
   }
 }

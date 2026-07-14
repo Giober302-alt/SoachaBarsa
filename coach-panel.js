@@ -7,6 +7,7 @@ import { requireAuth } from './auth.js';
 import { initShell, toast, getCollection, getGreeting } from './app.js';
 import { COLLECTIONS } from './firebase-config.js';
 import { Timestamp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
+import { renderNotificationBell } from './notifications.js';
 
 const init = async () => {
   const profile = await requireAuth('coach');
@@ -14,6 +15,7 @@ const init = async () => {
   initShell();
 
   document.getElementById('coachGreeting').textContent = getGreeting(profile.displayName);
+  renderNotificationBell('coachNotifs', { role: 'coach', email: profile.email });
 
   const [categories, students, schedules] = await Promise.all([
     getCollection(COLLECTIONS.CATEGORIES),
@@ -46,8 +48,8 @@ const renderAgenda = (schedules) => {
         <span class="ev-mon">${ev.d.toLocaleDateString('es-CO',{month:'short'})}</span>
       </div>
       <div class="event-details">
-        <p class="ev-title">${escapeHtml(ev.title || '')}</p>
-        <span class="ev-meta"><i class="fas fa-clock"></i> ${ev.d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})} · ${escapeHtml(ev.location || '')}</span>
+        <p class="ev-title">${ev.cancelled ? '<span style="text-decoration:line-through;color:var(--text-muted)">' + escapeHtml(ev.title || '') + '</span> — cancelado' : escapeHtml(ev.title || '')}</p>
+        <span class="ev-meta"><i class="fas fa-clock"></i> ${ev.d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})} · ${escapeHtml(ev.venue || ev.location || '')}${ev.court ? ' · Cancha ' + escapeHtml(ev.court) : ''}</span>
       </div>
     </div>`).join('');
 };
@@ -67,6 +69,7 @@ const renderStudents = (students, categories) => {
         <tr style="border-bottom:1px solid var(--border-color)">
           <td style="padding:12px 20px;font-weight:600;font-size:13.5px">${escapeHtml(s.displayName || '—')}</td>
           <td style="padding:12px 20px;font-size:13px;color:var(--text-secondary)">${escapeHtml(catName(s.categoryId))}</td>
+          <td style="padding:12px 20px;white-space:nowrap"><a href="./alumno-detalle.html?id=${s.id}" class="btn-outline-bara" style="padding:5px 10px"><i class="fas fa-id-card"></i></a></td>
         </tr>`).join('')}
       </tbody>
     </table>

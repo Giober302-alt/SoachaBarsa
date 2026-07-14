@@ -10,6 +10,7 @@ import {
 import { COLLECTIONS } from './firebase-config.js';
 import { Timestamp, collection, query, orderBy } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 import { db } from './firebase-config.js';
+import { notify } from './notifications.js';
 
 let events = [];
 
@@ -50,10 +51,10 @@ const render = (list) => {
         <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase">${d.toLocaleDateString('es-CO',{month:'short'})}</div>
       </div>
       <div style="flex:1;min-width:0">
-        <p style="font-weight:600;font-size:14px">${escapeHtml(ev.title || '—')}</p>
-        <p style="font-size:12px;color:var(--text-muted)"><i class="fas fa-clock"></i> ${d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})} · ${escapeHtml(ev.location || '')}</p>
+        <p style="font-weight:600;font-size:14px">${ev.cancelled ? '<span style="text-decoration:line-through;color:var(--text-muted)">' + escapeHtml(ev.title || '—') + '</span>' : escapeHtml(ev.title || '—')}</p>
+        <p style="font-size:12px;color:var(--text-muted)"><i class="fas fa-clock"></i> ${d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})} · ${escapeHtml(ev.venue || '')}${ev.court ? ' · Cancha ' + escapeHtml(ev.court) : ''}</p>
       </div>
-      <span class="badge-status ${typeBadge(ev.type)}">${escapeHtml(ev.type || 'Entrenamiento')}</span>
+      ${ev.cancelled ? `<span class="badge-status badge-overdue">Cancelado</span>` : `<span class="badge-status ${typeBadge(ev.type)}">${escapeHtml(ev.type || 'Entrenamiento')}</span>`}
       <button class="btn-outline-bara" style="padding:6px 10px" data-edit="${ev.id}"><i class="fas fa-pen"></i></button>
       <button class="btn-outline-bara" style="padding:6px 10px;color:#dc3545;border-color:#dc3545" data-delete="${ev.id}"><i class="fas fa-trash"></i></button>
     </div>`;
@@ -83,14 +84,21 @@ const openForm = (existing = null) => {
         <select id="swalType" class="form-control-bara swal2-input" style="margin:0 0 12px">
           ${['Entrenamiento','Partido','Reunión'].map(t => `<option value="${t}" ${existing?.type === t ? 'selected' : ''}>${t}</option>`).join('')}
         </select>
-        <label class="form-label-bara">Lugar</label>
-        <input id="swalLocation" class="form-control-bara swal2-input" style="margin:0 0 12px" value="${existing ? escapeHtml(existing.location || '') : ''}">
+        <div style="display:flex;gap:10px">
+          <div style="flex:1"><label class="form-label-bara">Sede</label>
+          <input id="swalVenue" class="form-control-bara swal2-input" style="margin:0" value="${existing ? escapeHtml(existing.venue || existing.location || '') : ''}"></div>
+          <div style="flex:1"><label class="form-label-bara">Cancha</label>
+          <input id="swalCourt" class="form-control-bara swal2-input" style="margin:0" value="${existing ? escapeHtml(existing.court || '') : ''}"></div>
+        </div>
         <div style="display:flex;gap:10px">
           <div style="flex:1"><label class="form-label-bara">Fecha</label>
           <input id="swalDate" type="date" class="form-control-bara swal2-input" style="margin:0" value="${dateStr}"></div>
           <div style="flex:1"><label class="form-label-bara">Hora</label>
           <input id="swalTime" type="time" class="form-control-bara swal2-input" style="margin:0" value="${timeStr}"></div>
         </div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);margin-top:12px">
+          <input id="swalCancelled" type="checkbox" ${existing?.cancelled ? 'checked' : ''}> Marcar como cancelado
+        </label>
       </div>`,
     showCancelButton: true,
     confirmButtonText: existing ? 'Guardar' : 'Crear',
@@ -105,14 +113,22 @@ const openForm = (existing = null) => {
       return {
         title,
         type: document.getElementById('swalType').value,
-        location: document.getElementById('swalLocation').value.trim(),
+        venue: document.getElementById('swalVenue').value.trim(),
+        court: document.getElementById('swalCourt').value.trim(),
+        location: document.getElementById('swalVenue').value.trim(),
+        cancelled: document.getElementById('swalCancelled').checked,
         startTime: Timestamp.fromDate(new Date(`${date}T${time}:00`))
       };
     }
   }).then(async (res) => {
     if (!res.isConfirmed) return;
     if (existing) { await updateDocument(COLLECTIONS.SCHEDULES, existing.id, res.value); toast('Evento actualizado', 'success'); }
-    else { await createDocument(COLLECTIONS.SCHEDULES, res.value); toast('Evento creado', 'success'); }
+    else {
+      await createDocument(COLLECTIONS.SCHEDULES, res.value);
+      toast('Evento creado', 'success');
+      notify({ audience: 'parents', title: 'Nuevo evento en la agenda', body: `${res.value.title} · ${res.value.venue || ''}` });
+      notify({ audience: 'coaches', title: 'Nuevo evento en la agenda', body: `${res.value.title} · ${res.value.venue || ''}` });
+    }
   });
 };
 

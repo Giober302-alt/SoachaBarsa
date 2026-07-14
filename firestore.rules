@@ -17,21 +17,14 @@ service cloud.firestore {
     function isCoordinator() { return myRole() in ['admin', 'coordinator']; }
     function isStaff()       { return myRole() in ['admin', 'coordinator', 'coach']; }
     function myEmail()       { return isSignedIn() ? request.auth.token.email : null; }
-    function isParentOf(studentId) {
+    function isParentOfDoc(studentId) {
       return myRole() == 'parent'
         && get(/databases/$(database)/documents/students/$(studentId)).data.parentEmail == myEmail();
     }
 
     // ── Perfiles de usuario ──────────────────────────────────────────────
-    // Cada usuario puede leer su propio perfil; el staff puede leer todos.
-    // Un usuario puede crear SU PROPIO perfil la primera vez que inicia
-    // sesión (bootstrap del primer administrador). Solo un admin puede
-    // cambiar el rol de alguien después de creado.
     match /users/{userId} {
       allow read:   if isSignedIn() && (request.auth.uid == userId || isStaff());
-      // Un usuario crea SU propio perfil (bootstrap del primer admin), o un
-      // admin crea el perfil de alguien más (alta de entrenadores/padres
-      // desde usuarios.html).
       allow create: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       allow update: if isAdmin()
                     || (isSignedIn() && request.auth.uid == userId
@@ -39,11 +32,18 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ── Catálogos administrativos (alumnos, categorías, entrenadores) ────
+    // ── Alumnos ────────────────────────────────────────────────────────────
+    // El padre puede leer la ficha de su hijo y editar SOLO los campos de
+    // contacto/adicional y la ficha médica (nunca categoría, entrenador,
+    // estado ni el correo de vinculación).
     match /students/{id} {
-      allow read:  if isStaff() || isParentOf(id);
-      allow write: if isCoordinator();
+      allow read:   if isStaff() || isParentOfDoc(id);
+      allow write:  if isCoordinator();
+      allow update: if isParentOfDoc(id)
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['contact', 'medical', 'photoURL', 'updatedAt']);
     }
+
     match /categories/{id} {
       allow read:  if isSignedIn();
       allow write: if isCoordinator();
@@ -59,11 +59,11 @@ service cloud.firestore {
 
     // ── Operación diaria ──────────────────────────────────────────────────
     match /attendance/{id} {
-      allow read:  if isStaff() || isParentOf(resource.data.studentId);
+      allow read:  if isStaff() || isParentOfDoc(resource.data.studentId);
       allow write: if isStaff();
     }
     match /payments/{id} {
-      allow read:  if isStaff() || isParentOf(resource.data.studentId);
+      allow read:  if isStaff() || isParentOfDoc(resource.data.studentId);
       allow write: if isCoordinator();
     }
     match /tournaments/{id} {
@@ -75,14 +75,38 @@ service cloud.firestore {
       allow write: if isCoordinator();
     }
 
-    // ── Comunicación ──────────────────────────────────────────────────────
+    // ── Ficha ampliada del alumno ──────────────────────────────────────────
+    match /documents/{id} {
+      allow read:   if isStaff() || isParentOfDoc(resource.data.studentId);
+      allow create: if isCoordinator() || isParentOfDoc(request.resource.data.studentId);
+      allow update, delete: if isCoordinator()
+        || (isParentOfDoc(resource.data.studentId) && resource.data.uploadedByRole == 'parent');
+    }
+    match /photos/{id} {
+      allow read:   if isStaff() || isParentOfDoc(resource.data.studentId);
+      allow create: if isCoordinator() || isParentOfDoc(request.resource.data.studentId);
+      allow delete: if isCoordinator()
+        || (isParentOfDoc(resource.data.studentId) && resource.data.uploadedByRole == 'parent');
+    }
+    match /performanceNotes/{id} {
+      allow read:  if isStaff() || isParentOfDoc(resource.data.studentId);
+      allow write: if isStaff();
+    }
+
+    // ── Comunicación y notificaciones ──────────────────────────────────────
     match /announcements/{id} {
       allow read:  if isSignedIn();
       allow write: if isCoordinator();
     }
     match /notifications/{id} {
-      allow read:  if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow write: if isStaff();
+      allow read: if isSignedIn() && (
+        resource.data.audience == 'all' ||
+        (resource.data.audience == 'parents' && myRole() == 'parent') ||
+        (resource.data.audience == 'coaches' && isStaff()) ||
+        (resource.data.parentEmail != null && resource.data.parentEmail == myEmail())
+      );
+      allow create: if isStaff();
+      allow update, delete: if isStaff();
     }
 
     // ── Reportes y configuración ──────────────────────────────────────────
@@ -95,7 +119,6 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Por defecto, todo lo demás queda bloqueado.
     match /{document=**} {
       allow read, write: if false;
     }

@@ -58,6 +58,7 @@ const render = (list) => {
           <td style="padding:12px 20px;font-size:13px;color:var(--text-secondary)">${formatDate(s.birthDate)}</td>
           <td style="padding:12px 20px"><span class="badge-status ${s.active === false ? 'badge-overdue' : 'badge-paid'}">${s.active === false ? 'Inactivo' : 'Activo'}</span></td>
           <td style="padding:12px 20px;white-space:nowrap">
+            <a class="btn-outline-bara" style="padding:6px 10px" href="./alumno-detalle.html?id=${s.id}"><i class="fas fa-id-card"></i></a>
             <button class="btn-outline-bara" style="padding:6px 10px" data-edit="${s.id}"><i class="fas fa-pen"></i></button>
             <button class="btn-outline-bara" style="padding:6px 10px;color:#dc3545;border-color:#dc3545" data-delete="${s.id}"><i class="fas fa-trash"></i></button>
           </td>

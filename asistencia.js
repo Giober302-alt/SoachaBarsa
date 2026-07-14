@@ -8,6 +8,7 @@ import { COLLECTIONS, db } from './firebase-config.js';
 import {
   collection, query, where, getDocs, doc, setDoc, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
+import { notify } from './notifications.js';
 
 let categories = [];
 let students   = [];
@@ -83,6 +84,8 @@ const renderRoster = (existing) => {
   </div></div>`;
 };
 
+const STATUS_LABEL_ES = { arrived: 'Presente', late: 'Tarde', absent: 'Ausente', excused: 'Excusa' };
+
 const saveAttendance = async () => {
   const dateStr = document.getElementById('dateInput').value;
   if (!dateStr) { toast('Elige una fecha', 'warning'); return; }
@@ -97,6 +100,13 @@ const saveAttendance = async () => {
       status: checked.value, updatedAt: serverTimestamp()
     });
     count++;
+    if (s.parentEmail) {
+      notify({
+        parentEmail: s.parentEmail,
+        title: `Asistencia de ${s.displayName}`,
+        body: `${STATUS_LABEL_ES[checked.value] || checked.value} el ${dateStr}`
+      });
+    }
   }
   btn.disabled = false;
   toast(`Asistencia guardada (${count} alumnos)`, 'success');
