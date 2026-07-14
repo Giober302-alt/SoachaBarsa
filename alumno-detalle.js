@@ -254,6 +254,7 @@ const renderContact = () => {
         ${field('Dirección', c.address || '—')}
         ${field('Teléfono(s)', c.phones || '—')}
         ${field('Correo del padre/acudiente', student.parentEmail || '—')}
+        ${field('Teléfono del acudiente (WhatsApp)', student.parentPhone || '—')}
         ${field('Personas autorizadas para recoger', c.authorizedPickup || '—')}
       </div>
     </div>`;

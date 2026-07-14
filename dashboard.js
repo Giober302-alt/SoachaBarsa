@@ -70,46 +70,56 @@ const renderGreeting = (profile) => {
 // ─── Indicadores en tiempo real ───────────────────────────────────────────────
 const subscribeStats = () => {
   const todayStr = new Date().toISOString().split('T')[0];
+  const state = { totalStudents: 0, birthdays: 0, arrived: 0, pendingPayments: 0, nextTournaments: 0 };
+  const unsubs = [];
 
-  const studQ = query(
-    collection(db, COLLECTIONS.STUDENTS),
-    where('active', '==', true)
-  );
+  const recompute = () => {
+    const pct = state.totalStudents > 0 ? Math.round((state.arrived / state.totalStudents) * 100) : 0;
+    renderStats({ ...state, pct });
+    scheduleChartsRefresh();
+  };
 
-  return onSnapshot(studQ, async (studSnap) => {
-    const totalStudents = studSnap.size;
-    const birthdays     = studSnap.docs.filter(d => {
-      const bd = d.data().birthDate;
-      if (!bd) return false;
-      const bDate = bd.toDate ? bd.toDate() : new Date(bd);
-      return bDate.getMonth() === new Date().getMonth();
-    }).length;
+  // Alumnos activos + cumpleaños del mes
+  unsubs.push(onSnapshot(
+    query(collection(db, COLLECTIONS.STUDENTS), where('active', '==', true)),
+    (snap) => {
+      state.totalStudents = snap.size;
+      state.birthdays = snap.docs.filter(d => {
+        const bd = d.data().birthDate;
+        if (!bd) return false;
+        const bDate = bd.toDate ? bd.toDate() : new Date(bd);
+        return bDate.getMonth() === new Date().getMonth();
+      }).length;
+      recompute();
+    },
+    (err) => { console.error('[Dashboard] students:', err); toast('Error al cargar indicadores', 'error'); }
+  ));
 
-    // Asistencia de hoy
-    const attSnap = await getDocs(
-      query(collection(db, COLLECTIONS.ATTENDANCE), where('date','==', todayStr))
-    );
-    const arrived = attSnap.docs.filter(d => ['arrived','late'].includes(d.data().status)).length;
-    const pct     = totalStudents > 0 ? Math.round((arrived / totalStudents) * 100) : 0;
+  // Asistencia de hoy (en vivo)
+  unsubs.push(onSnapshot(
+    query(collection(db, COLLECTIONS.ATTENDANCE), where('date', '==', todayStr)),
+    (snap) => {
+      state.arrived = snap.docs.filter(d => ['arrived', 'late'].includes(d.data().status)).length;
+      recompute();
+    },
+    (err) => console.error('[Dashboard] attendance:', err)
+  ));
 
-    // Pagos pendientes
-    const paySnap = await getDocs(
-      query(collection(db, COLLECTIONS.PAYMENTS), where('status','in',['pending','overdue']))
-    );
+  // Pagos pendientes/vencidos (en vivo)
+  unsubs.push(onSnapshot(
+    query(collection(db, COLLECTIONS.PAYMENTS), where('status', 'in', ['pending', 'overdue'])),
+    (snap) => { state.pendingPayments = snap.size; recompute(); },
+    (err) => console.error('[Dashboard] payments:', err)
+  ));
 
-    // Próximos torneos
-    const torSnap = await getDocs(
-      query(collection(db, COLLECTIONS.TOURNAMENTS),
-        where('date','>=', Timestamp.now()), orderBy('date'), limit(3))
-    );
+  // Próximos torneos (en vivo)
+  unsubs.push(onSnapshot(
+    query(collection(db, COLLECTIONS.TOURNAMENTS), where('date', '>=', Timestamp.now()), orderBy('date'), limit(3)),
+    (snap) => { state.nextTournaments = snap.size; recompute(); },
+    (err) => console.error('[Dashboard] tournaments:', err)
+  ));
 
-    renderStats({ totalStudents, arrived, pct,
-      pendingPayments: paySnap.size, nextTournaments: torSnap.size, birthdays });
-
-  }, (err) => {
-    console.error('[Dashboard] subscribeStats:', err);
-    toast('Error al cargar indicadores', 'error');
-  });
+  return () => unsubs.forEach(fn => fn());
 };
 
 // ─── Stat cards ───────────────────────────────────────────────────────────────
@@ -162,6 +172,12 @@ const animateCounter = (el, target) => {
 };
 
 // ─── Gráficas ─────────────────────────────────────────────────────────────────
+let chartsRefreshTimer = null;
+const scheduleChartsRefresh = () => {
+  clearTimeout(chartsRefreshTimer);
+  chartsRefreshTimer = setTimeout(loadCharts, 800);
+};
+
 const loadCharts = async () => {
   await Promise.all([renderAttendanceChart(), renderPaymentsChart(), renderCategoriesChart()]);
 };

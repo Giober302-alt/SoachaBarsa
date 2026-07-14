@@ -44,6 +44,14 @@ export const fetchNotificationsFor = async ({ role, email }) => {
 
 export const waShareUrl = (text) => `https://wa.me/?text=${encodeURIComponent(text)}`;
 
+// Enlace directo a un número (formato libre: el usuario lo escribe con o sin
+// espacios/guiones/+; aquí se limpia a solo dígitos). Sigue siendo un envío
+// MANUAL con un clic — WhatsApp no permite automatizarlo gratis.
+export const waDirectUrl = (phone, text) => {
+  const digits = String(phone || '').replace(/\D/g, '');
+  return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+};
+
 export const renderNotificationBell = async (containerId, { role, email }) => {
   const el = document.getElementById(containerId);
   if (!el) return;

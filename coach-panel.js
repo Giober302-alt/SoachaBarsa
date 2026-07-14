@@ -7,7 +7,7 @@ import { requireAuth } from './auth.js';
 import { initShell, toast, getCollection, getGreeting } from './app.js';
 import { COLLECTIONS, db } from './firebase-config.js';
 import { Timestamp, collection, query, where, getDocs, doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
-import { renderNotificationBell, notify } from './notifications.js';
+import { renderNotificationBell, notify, waDirectUrl } from './notifications.js';
 
 const STATUSES = [
   { key: 'arrived', label: 'Presente', color: '#198754' },
@@ -80,6 +80,7 @@ const saveAttRoster = async () => {
   const dateStr = document.getElementById('attDateInput').value;
   if (!dateStr) { toast('Elige una fecha', 'warning'); return; }
   let count = 0;
+  const waList = [];
   for (const s of rosterStudents) {
     const checked = document.querySelector(`input[name="coachAtt_${s.id}"]:checked`);
     if (!checked) continue;
@@ -91,8 +92,18 @@ const saveAttRoster = async () => {
     if (s.parentEmail) {
       notify({ parentEmail: s.parentEmail, title: `Asistencia de ${s.displayName}`, body: `${STATUS_LABEL_ES[checked.value]} el ${dateStr}` });
     }
+    if (['arrived', 'late'].includes(checked.value) && s.parentPhone) {
+      waList.push({ name: s.displayName, phone: s.parentPhone, status: checked.value });
+    }
   }
   toast(`Asistencia guardada (${count} alumnos)`, 'success');
+  const box = document.getElementById('coachWaNotify');
+  if (box) {
+    box.innerHTML = waList.length === 0 ? '' : `<div class="card-bara" style="padding:16px 18px;margin-top:12px">
+      <p style="font-weight:700;font-size:13.5px;margin-bottom:10px"><i class="fab fa-whatsapp" style="color:#25D366"></i> Notificar llegada por WhatsApp</p>
+      ${waList.map(w => `<a href="${waDirectUrl(w.phone, `Hola! Te informamos que ${w.name} llegó al entrenamiento del ${dateStr} (${STATUS_LABEL_ES[w.status]}). Barsa Soacha Academy.`)}" target="_blank" rel="noopener" class="btn-outline-bara" style="margin:0 8px 8px 0"><i class="fab fa-whatsapp" style="color:#25D366"></i> ${escapeHtml(w.name)}</a>`).join('')}
+    </div>`;
+  }
 };
 
 const renderAgenda = (schedules) => {

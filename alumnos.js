@@ -108,6 +108,8 @@ const openForm = (existing = null) => {
         <input id="swalBirth" type="date" class="form-control-bara swal2-input" style="margin:0 0 12px" value="${birthStr}">
         <label class="form-label-bara">Correo del padre/acudiente <span style="font-weight:400;color:var(--text-muted)">(para el Portal de Padres)</span></label>
         <input id="swalParentEmail" type="email" class="form-control-bara swal2-input" style="margin:0 0 12px" placeholder="padre@correo.com" value="${existing ? escapeHtml(existing.parentEmail || '') : ''}">
+        <label class="form-label-bara">Teléfono del acudiente <span style="font-weight:400;color:var(--text-muted)">(WhatsApp, con indicativo: 57...)</span></label>
+        <input id="swalParentPhone" class="form-control-bara swal2-input" style="margin:0 0 12px" placeholder="57 300 1234567" value="${existing ? escapeHtml(existing.parentPhone || '') : ''}">
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary)">
           <input id="swalActive" type="checkbox" ${existing?.active === false ? '' : 'checked'}> Activo
         </label>
@@ -127,6 +129,7 @@ const openForm = (existing = null) => {
         categoryId: null,
         birthDate: birthVal ? Timestamp.fromDate(new Date(birthVal + 'T00:00:00')) : null,
         parentEmail: document.getElementById('swalParentEmail').value.trim().toLowerCase() || null,
+        parentPhone: document.getElementById('swalParentPhone').value.trim() || null,
         active: document.getElementById('swalActive').checked
       };
     }

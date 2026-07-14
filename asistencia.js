@@ -8,7 +8,7 @@ import { COLLECTIONS, db } from './firebase-config.js';
 import {
   collection, query, where, getDocs, doc, setDoc, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
-import { notify } from './notifications.js';
+import { notify, waDirectUrl } from './notifications.js';
 
 let categories = [];
 let students   = [];
@@ -93,6 +93,7 @@ const saveAttendance = async () => {
   const btn = document.getElementById('saveBtn');
   btn.disabled = true;
   let count = 0;
+  const waList = [];
   for (const s of students) {
     const checked = document.querySelector(`input[name="att_${s.id}"]:checked`);
     if (!checked) continue;
@@ -108,9 +109,23 @@ const saveAttendance = async () => {
         body: `${STATUS_LABEL_ES[checked.value] || checked.value} el ${dateStr}`
       });
     }
+    if (['arrived', 'late'].includes(checked.value) && s.parentPhone) {
+      waList.push({ name: s.displayName, phone: s.parentPhone, status: checked.value });
+    }
   }
   btn.disabled = false;
   toast(`Asistencia guardada (${count} alumnos)`, 'success');
+  renderWaNotify(waList, dateStr);
+};
+
+const renderWaNotify = (waList, dateStr) => {
+  const el = document.getElementById('waNotifyBox');
+  if (!el) return;
+  if (waList.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="card-bara" style="padding:16px 18px;margin-top:14px">
+    <p style="font-weight:700;font-size:13.5px;margin-bottom:10px"><i class="fab fa-whatsapp" style="color:#25D366"></i> Notificar llegada por WhatsApp</p>
+    ${waList.map(w => `<a href="${waDirectUrl(w.phone, `Hola! Te informamos que ${w.name} llegó al entrenamiento del ${dateStr} (${STATUS_LABEL_ES[w.status]}). Barsa Soacha Academy.`)}" target="_blank" rel="noopener" class="btn-outline-bara" style="margin:0 8px 8px 0"><i class="fab fa-whatsapp" style="color:#25D366"></i> ${escapeHtml(w.name)}</a>`).join('')}
+  </div>`;
 };
 
 const escapeHtml = (s = '') => s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
