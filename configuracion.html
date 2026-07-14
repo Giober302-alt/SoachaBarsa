@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Categorías — Barsa Soacha Academy</title>
+  <title>Configuración — Barsa Soacha Academy</title>
   <link rel="icon" type="image/svg+xml" href="./logo-barsa.svg">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -164,20 +164,36 @@
     </header>
 
     <!-- Cuerpo del dashboard -->
-    <main class="page-body" id="categoriasPage">
+    <main class="page-body" id="configPage">
 
       <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
-        <div>
-          <h1 class="greeting-text">Categorías</h1>
-          <p class="date-text">Equipos por rango de edad</p>
-        </div>
-        <button class="btn-primary-bara" id="btnNewCategory"><i class="fas fa-plus"></i> Nueva categoría</button>
+        <div><h1 class="greeting-text">Configuración</h1><p class="date-text">Datos generales de la academia</p></div>
       </div>
-      <section aria-label="Categorías" style="display:flex;flex-direction:column;gap:12px">
-        <div id="categoriesContainer">
-          <div class="skeleton-card"></div>
+      <form id="settingsForm" class="card-bara" style="padding:24px;max-width:560px;display:flex;flex-direction:column;gap:16px">
+        <div>
+          <label class="form-label-bara">Nombre de la academia</label>
+          <input id="academyName" class="form-control-bara" required>
         </div>
-      </section>
+        <div>
+          <label class="form-label-bara">Valor mensualidad por defecto (COP)</label>
+          <input id="monthlyFee" type="number" class="form-control-bara">
+        </div>
+        <div>
+          <label class="form-label-bara">Sedes / canchas <span style="font-weight:400;color:var(--text-muted)">(una por línea)</span></label>
+          <textarea id="venues" class="form-control-bara" style="min-height:90px" placeholder="Cancha Municipal - Cancha 1&#10;Coliseo Soacha - Cancha 2"></textarea>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <label class="form-label-bara">Teléfono de contacto</label>
+            <input id="contactPhone" class="form-control-bara">
+          </div>
+          <div style="flex:1;min-width:200px">
+            <label class="form-label-bara">Correo de contacto</label>
+            <input id="contactEmail" type="email" class="form-control-bara">
+          </div>
+        </div>
+        <button type="submit" class="btn-primary-bara" style="align-self:flex-start"><i class="fas fa-save"></i> Guardar cambios</button>
+      </form>
 </main>
   </div>
 </div>
@@ -194,7 +210,7 @@
 
 <!-- Módulo principal — RUTA PLANA -->
 <script type="module">
-  import './categorias.js';
+  import './configuracion.js';
 </script>
 
 </body>

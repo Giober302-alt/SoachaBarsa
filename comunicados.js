@@ -7,7 +7,8 @@ import {
   initShell, toast, showConfirm, hideLoader, showLoader,
   createDocument, updateDocument, deleteDocument, subscribeCollection, formatDate, truncate
 } from './app.js';
-import { COLLECTIONS } from './firebase-config.js';
+import { COLLECTIONS, storage } from './firebase-config.js';
+import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-storage.js';
 import { notify } from './notifications.js';
 
 let announcements = [];
@@ -39,6 +40,7 @@ const render = (list) => {
       <div style="display:flex;justify-content:space-between;align-items:start;gap:12px">
         <div style="flex:1;min-width:0">
           <p style="font-weight:700;font-size:14px">${a.pinned ? '<i class="fas fa-thumbtack" style="color:var(--color-gold);margin-right:6px"></i>' : ''}${escapeHtml(a.title || '—')}</p>
+          ${a.imageURL ? `<img src="${a.imageURL}" style="max-width:220px;border-radius:10px;margin-top:8px;display:block">` : ''}
           <p style="font-size:13px;color:var(--text-secondary);margin-top:6px;white-space:pre-wrap">${escapeHtml(truncate(a.body || '', 220))}</p>
           <p style="font-size:11px;color:var(--text-muted);margin-top:8px">${formatDate(a.createdAt)}</p>
         </div>
@@ -67,6 +69,9 @@ const openForm = (existing = null) => {
         <input id="swalTitle" class="form-control-bara swal2-input" style="margin:0 0 12px" value="${existing ? escapeHtml(existing.title || '') : ''}">
         <label class="form-label-bara">Mensaje</label>
         <textarea id="swalBody" class="form-control-bara swal2-textarea" style="margin:0 0 12px;min-height:100px">${existing ? escapeHtml(existing.body || '') : ''}</textarea>
+        <label class="form-label-bara">Imagen (opcional)</label>
+        <input id="swalImage" type="file" accept="image/*" class="form-control-bara swal2-input" style="margin:0 0 12px">
+        ${existing?.imageURL ? `<img src="${existing.imageURL}" style="max-width:140px;border-radius:8px;margin-bottom:12px;display:block">` : ''}
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary)">
           <input id="swalPinned" type="checkbox" ${existing?.pinned ? 'checked' : ''}> Fijar arriba
         </label>
@@ -76,13 +81,24 @@ const openForm = (existing = null) => {
     cancelButtonText: 'Cancelar',
     confirmButtonColor: '#8B0000',
     focusConfirm: false,
-    preConfirm: () => {
+    preConfirm: async () => {
       const title = document.getElementById('swalTitle').value.trim();
       if (!title) { Swal.showValidationMessage('Escribe un título'); return false; }
+      const file = document.getElementById('swalImage').files[0];
+      let imageURL = existing?.imageURL || null;
+      if (file) {
+        try {
+          const path = `announcements/${Date.now()}_${file.name}`;
+          const sref = ref(storage, path);
+          await uploadBytes(sref, file);
+          imageURL = await getDownloadURL(sref);
+        } catch (err) { Swal.showValidationMessage('Error subiendo la imagen: ' + (err.code || err.message)); return false; }
+      }
       return {
         title,
         body: document.getElementById('swalBody').value.trim(),
-        pinned: document.getElementById('swalPinned').checked
+        pinned: document.getElementById('swalPinned').checked,
+        imageURL
       };
     }
   }).then(async (res) => {

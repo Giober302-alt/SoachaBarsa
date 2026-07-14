@@ -56,6 +56,10 @@ const init = async () => {
     getCollection(COLLECTIONS.COACHES)
   ]);
   const catName = (id) => categories.find(c => c.id === id)?.name || '—';
+  const catNamesFor = (s) => {
+    const ids = (s.categoryIds && s.categoryIds.length) ? s.categoryIds : (s.categoryId ? [s.categoryId] : []);
+    return ids.map(id => catName(id)).join(', ') || '—';
+  };
   const coachName = (id) => coaches.find(c => c.id === id)?.displayName || 'Sin asignar';
 
   const studentIds = students.map(s => s.id);
@@ -115,7 +119,7 @@ const renderChildren = (students, catName, coachName, attendance, payments) => {
         </div>
         <div style="flex:1;min-width:0">
           <p style="font-weight:700;font-size:16px">${escapeHtml(s.displayName || '—')}</p>
-          <p style="font-size:12px;color:var(--text-muted)">${escapeHtml(catName(s.categoryId))} · Entrenador: ${escapeHtml(coachName(s.coachId))}</p>
+          <p style="font-size:12px;color:var(--text-muted)">${escapeHtml(catNamesFor(s))} · Entrenador: ${escapeHtml(coachName(s.coachId))}</p>
         </div>
         <a href="./alumno-detalle.html?id=${s.id}" class="btn-outline-bara" style="padding:7px 12px"><i class="fas fa-id-card"></i> Ver ficha completa</a>
       </div>
@@ -162,6 +166,7 @@ const renderAnnouncements = (list) => {
   el.innerHTML = sorted.slice(0, 6).map(a => `
     <div style="padding:12px 0;border-bottom:1px solid var(--border-color)">
       <p style="font-weight:600;font-size:13.5px">${a.pinned ? '<i class="fas fa-thumbtack" style="color:var(--color-gold);margin-right:6px"></i>' : ''}${escapeHtml(a.title || '')}</p>
+      ${a.imageURL ? `<img src="${a.imageURL}" style="max-width:220px;border-radius:10px;margin:8px 0;display:block">` : ''}
       <p style="font-size:13px;color:var(--text-secondary);margin-top:4px;white-space:pre-wrap">${escapeHtml(a.body || '')}</p>
       <p style="font-size:11px;color:var(--text-muted);margin-top:6px">${formatDate(a.createdAt)}</p>
     </div>`).join('');

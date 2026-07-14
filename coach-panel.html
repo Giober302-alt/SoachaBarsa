@@ -47,6 +47,23 @@
   <p class="coach-section-title"><i class="fas fa-calendar-alt"></i> Próximos eventos</p>
   <div id="coachAgenda"><div class="skeleton-card"></div></div>
 
+  <p class="coach-section-title"><i class="fas fa-clipboard-check"></i> Pasar asistencia</p>
+  <div class="card-bara" style="padding:16px 18px;margin-bottom:14px">
+    <div class="d-flex gap-3 flex-wrap align-items-end">
+      <div>
+        <label class="form-label-bara">Categoría</label>
+        <select id="attCategorySelect" class="form-control-bara" style="min-width:180px"></select>
+      </div>
+      <div>
+        <label class="form-label-bara">Fecha</label>
+        <input id="attDateInput" type="date" class="form-control-bara">
+      </div>
+      <button class="btn-outline-bara" id="attLoadBtn"><i class="fas fa-rotate"></i> Cargar</button>
+      <button class="btn-primary-bara" id="attSaveBtn" style="margin-left:auto"><i class="fas fa-check"></i> Guardar</button>
+    </div>
+  </div>
+  <div id="attRoster"><div class="skeleton-card"></div></div>
+
   <p class="coach-section-title"><i class="fas fa-users"></i> Alumnos activos</p>
   <div id="coachStudents"><div class="skeleton-card"></div></div>
 </div>

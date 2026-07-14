@@ -31,6 +31,12 @@ const init = async () => {
 };
 
 const categoryName = (id) => categories.find(c => c.id === id)?.name || '—';
+const studentCategoryIds = (s) => (s.categoryIds && s.categoryIds.length) ? s.categoryIds : (s.categoryId ? [s.categoryId] : []);
+const categoryNamesFor = (s) => {
+  const ids = studentCategoryIds(s);
+  if (ids.length === 0) return '—';
+  return ids.map(id => categoryName(id)).join(', ');
+};
 
 const render = (list) => {
   const el = document.getElementById('studentsContainer');
@@ -54,7 +60,7 @@ const render = (list) => {
         ${list.map(s => `
         <tr style="border-bottom:1px solid var(--border-color)">
           <td style="padding:12px 20px;font-weight:600;font-size:13.5px">${escapeHtml(s.displayName || '—')}</td>
-          <td style="padding:12px 20px;font-size:13px;color:var(--text-secondary)">${escapeHtml(categoryName(s.categoryId))}</td>
+          <td style="padding:12px 20px;font-size:13px;color:var(--text-secondary)">${escapeHtml(categoryNamesFor(s))}</td>
           <td style="padding:12px 20px;font-size:13px;color:var(--text-secondary)">${formatDate(s.birthDate)}</td>
           <td style="padding:12px 20px"><span class="badge-status ${s.active === false ? 'badge-overdue' : 'badge-paid'}">${s.active === false ? 'Inactivo' : 'Activo'}</span></td>
           <td style="padding:12px 20px;white-space:nowrap">
@@ -80,7 +86,11 @@ const render = (list) => {
 };
 
 const openForm = (existing = null) => {
-  const options = categories.map(c => `<option value="${c.id}" ${existing?.categoryId === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
+  const existingIds = existing ? studentCategoryIds(existing) : [];
+  const checkboxes = categories.map(c => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13.5px">
+      <input type="checkbox" class="swalCategoryChk" value="${c.id}" ${existingIds.includes(c.id) ? 'checked' : ''}> ${escapeHtml(c.name)}
+    </label>`).join('');
   const birth = existing?.birthDate ? (existing.birthDate.toDate ? existing.birthDate.toDate() : new Date(existing.birthDate)) : null;
   const birthStr = birth ? birth.toISOString().slice(0, 10) : '';
 
@@ -90,11 +100,10 @@ const openForm = (existing = null) => {
       <div style="text-align:left">
         <label class="form-label-bara">Nombre completo</label>
         <input id="swalName" class="form-control-bara swal2-input" style="margin:0 0 12px" value="${existing ? escapeHtml(existing.displayName || '') : ''}">
-        <label class="form-label-bara">Categoría</label>
-        <select id="swalCategory" class="form-control-bara swal2-input" style="margin:0 0 12px">
-          <option value="">Sin categoría</option>
-          ${options}
-        </select>
+        <label class="form-label-bara">Categorías <span style="font-weight:400;color:var(--text-muted)">(puede pertenecer a varias)</span></label>
+        <div style="border:1.5px solid var(--border-color);border-radius:10px;padding:8px 14px;margin:0 0 12px;max-height:150px;overflow-y:auto">
+          ${checkboxes || '<p style="font-size:12.5px;color:var(--text-muted)">Crea categorías primero.</p>'}
+        </div>
         <label class="form-label-bara">Fecha de nacimiento</label>
         <input id="swalBirth" type="date" class="form-control-bara swal2-input" style="margin:0 0 12px" value="${birthStr}">
         <label class="form-label-bara">Correo del padre/acudiente <span style="font-weight:400;color:var(--text-muted)">(para el Portal de Padres)</span></label>
@@ -114,7 +123,8 @@ const openForm = (existing = null) => {
       const birthVal = document.getElementById('swalBirth').value;
       return {
         displayName,
-        categoryId: document.getElementById('swalCategory').value || null,
+        categoryIds: Array.from(document.querySelectorAll('.swalCategoryChk:checked')).map(el => el.value),
+        categoryId: null,
         birthDate: birthVal ? Timestamp.fromDate(new Date(birthVal + 'T00:00:00')) : null,
         parentEmail: document.getElementById('swalParentEmail').value.trim().toLowerCase() || null,
         active: document.getElementById('swalActive').checked

@@ -90,7 +90,12 @@ const age = (birth) => {
 };
 
 const catName = (id) => categories.find(c => c.id === id)?.name || '—';
+const catNamesFor = (s) => {
+  const ids = (s.categoryIds && s.categoryIds.length) ? s.categoryIds : (s.categoryId ? [s.categoryId] : []);
+  return ids.map(id => catName(id)).join(', ') || '—';
+};
 const coachName = (id) => coaches.find(c => c.id === id)?.displayName || 'Sin asignar';
+const studentCategoryIds = (s) => (s.categoryIds && s.categoryIds.length) ? s.categoryIds : (s.categoryId ? [s.categoryId] : []);
 
 // ─── General ──────────────────────────────────────────────────────────────
 const renderGeneral = () => {
@@ -111,7 +116,7 @@ const renderGeneral = () => {
         ${field('Documento', `${student.documentType || 'CC'} ${student.documentNumber || '—'}`)}
         ${field('Fecha de nacimiento', formatDate(student.birthDate))}
         ${field('Edad', age(student.birthDate) + ' años')}
-        ${field('Categoría / Equipo', catName(student.categoryId))}
+        ${field('Categoría / Equipo', catNamesFor(student))}
         ${field('Entrenador asignado', coachName(student.coachId))}
       </div>
     </div>`;
@@ -132,11 +137,10 @@ const openGeneralForm = () => {
           </select>
           <input id="swalDocNumber" class="form-control-bara swal2-input" style="margin:0;flex:1" value="${escapeHtml(student.documentNumber || '')}">
         </div>
-        <label class="form-label-bara">Categoría</label>
-        <select id="swalCategory" class="form-control-bara swal2-input" style="margin:0 0 12px">
-          <option value="">Sin categoría</option>
-          ${categories.map(c => `<option value="${c.id}" ${student.categoryId === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
-        </select>
+        <label class="form-label-bara">Categorías <span style="font-weight:400;color:var(--text-muted)">(puede pertenecer a varias)</span></label>
+        <div style="border:1.5px solid var(--border-color);border-radius:10px;padding:8px 14px;margin:0 0 12px;max-height:130px;overflow-y:auto">
+          ${categories.map(c => `<label style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13.5px"><input type="checkbox" class="swalCatChk" value="${c.id}" ${studentCategoryIds(student).includes(c.id) ? 'checked' : ''}> ${escapeHtml(c.name)}</label>`).join('') || '<p style="font-size:12.5px;color:var(--text-muted)">Crea categorías primero.</p>'}
+        </div>
         <label class="form-label-bara">Entrenador asignado</label>
         <select id="swalCoach" class="form-control-bara swal2-input" style="margin:0 0 12px">
           <option value="">Sin asignar</option>
@@ -151,7 +155,8 @@ const openGeneralForm = () => {
     preConfirm: () => ({
       documentType: document.getElementById('swalDocType').value,
       documentNumber: document.getElementById('swalDocNumber').value.trim(),
-      categoryId: document.getElementById('swalCategory').value || null,
+      categoryIds: Array.from(document.querySelectorAll('.swalCatChk:checked')).map(el => el.value),
+      categoryId: null,
       coachId: document.getElementById('swalCoach').value || null,
       active: document.getElementById('swalActive').checked
     })

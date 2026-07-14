@@ -238,7 +238,8 @@ const renderCategoriesChart = async () => {
   const cats   = catsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
   const studs  = studsSnap.docs.map(d => d.data());
   const labels = cats.map(c => c.name);
-  const data   = cats.map(c => studs.filter(s => s.categoryId === c.id).length);
+  const inStudentCats = (s, catId) => (s.categoryIds && s.categoryIds.length) ? s.categoryIds.includes(catId) : s.categoryId === catId;
+  const data   = cats.map(c => studs.filter(s => inStudentCats(s, c.id)).length);
   const colors = cats.map(c => c.color || '#8B0000');
 
   chartCategories = new Chart(canvas, {

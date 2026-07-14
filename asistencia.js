@@ -45,7 +45,8 @@ const loadRoster = async () => {
   const dateStr = document.getElementById('dateInput').value;
 
   const all = await getCollection(COLLECTIONS.STUDENTS, [where('active', '==', true)]);
-  students = catId ? all.filter(s => s.categoryId === catId) : all;
+  const inCat = (s) => (s.categoryIds && s.categoryIds.length) ? s.categoryIds.includes(catId) : s.categoryId === catId;
+  students = catId ? all.filter(inCat) : all;
 
   // Marcas ya guardadas para esta fecha
   const existingSnap = await getDocs(query(collection(db, COLLECTIONS.ATTENDANCE), where('date', '==', dateStr)));
