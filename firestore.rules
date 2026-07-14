@@ -21,6 +21,10 @@ service cloud.firestore {
       return myRole() == 'parent'
         && get(/databases/$(database)/documents/students/$(studentId)).data.parentEmail == myEmail();
     }
+    function isSupervisor(tournamentId) {
+      return isStaff() && myEmail() != null &&
+        get(/databases/$(database)/documents/tournaments/$(tournamentId)).data.coachEmails.hasAny([myEmail()]);
+    }
 
     // ── Perfiles de usuario ──────────────────────────────────────────────
     match /users/{userId} {
@@ -69,6 +73,17 @@ service cloud.firestore {
     match /tournaments/{id} {
       allow read:  if isSignedIn();
       allow write: if isCoordinator();
+    }
+    match /tournamentRegistrations/{id} {
+      allow read:   if isStaff() || isParentOfDoc(resource.data.studentId);
+      allow create: if isCoordinator() || isParentOfDoc(request.resource.data.studentId);
+      allow update: if isCoordinator() || isSupervisor(resource.data.tournamentId);
+      allow delete: if isCoordinator() || isParentOfDoc(resource.data.studentId);
+    }
+    match /tournamentUpdates/{id} {
+      allow read:   if isSignedIn();
+      allow create: if isCoordinator() || isSupervisor(request.resource.data.tournamentId);
+      allow delete: if isCoordinator();
     }
     match /schedules/{id} {
       allow read:  if isSignedIn();

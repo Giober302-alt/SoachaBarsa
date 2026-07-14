@@ -10,8 +10,9 @@ hosting opcional). No necesitas saber programar para seguir esta guía.
 - `login.html` / `dashboard.html` — páginas de la app.
 - `app.js`, `auth.js`, `dashboard.js`, `firebase-config.js` — lógica.
 - `style.css`, `responsive.css` — diseño visual (marca Barsa Soacha).
-- `logo-barsa.svg` — el escudo. **Reemplaza este archivo por tu logo real
-  cuando lo tengas** (mismo nombre, formato SVG o PNG — ver paso 5).
+- `logo-barsa.svg` / `logo-barsa.png` — el escudo. **Solo sube tu logo real como
+  `logo-barsa.png`** (mismo nombre exacto) y aparece en todo el sitio
+  automáticamente — no hay que editar código (ver paso 5).
 - `firestore.rules`, `storage.rules` — reglas de seguridad de la base de datos.
 - `configuracion-inicial.html` — asistente para crear tu primer usuario administrador
   y, si quieres, datos de ejemplo.
@@ -103,16 +104,16 @@ sitio en vivo, gratis, con HTTPS incluido.
 
 ## Paso 5 — Reemplazar el logo por el escudo real
 
-El logo se usa desde **un solo archivo**: `logo-barsa.svg`. Para cambiarlo:
+El sitio busca primero `logo-barsa.png`; si no existe, usa `logo-barsa.svg`
+como respaldo. Para poner tu logo real:
 
-1. Consigue el escudo real en formato **SVG** (ideal, se ve nítido a
-   cualquier tamaño) o **PNG** con fondo transparente.
-2. Si es SVG: reemplaza el archivo `logo-barsa.svg` por el nuevo, con
-   exactamente ese mismo nombre.
-3. Si es PNG: guárdalo como `logo-barsa.png` y reemplaza esta línea en
-   `index.html`, `login.html` y `dashboard.html`:
-   `src="./logo-barsa.svg"` → `src="./logo-barsa.png"` (3 lugares en total).
-4. Vuelve a publicar (`firebase deploy`, o sube el archivo nuevo a GitHub).
+1. Consigue el escudo real, idealmente PNG con **fondo transparente**.
+2. Guárdalo con el nombre exacto **`logo-barsa.png`** en la raíz del proyecto
+   (junto a `index.html`). No necesitas tocar ningún archivo de código.
+3. Vuelve a publicar (`firebase deploy`, o sube el archivo nuevo a GitHub).
+
+Si prefieres SVG, guárdalo como `logo-barsa.svg` (reemplazando el actual) —
+sigue funcionando igual, solo que `logo-barsa.png` tiene prioridad si ambos existen.
 
 No necesitas tocar el CSS: el tamaño y la sombra del logo ya están
 controlados por las páginas donde aparece.

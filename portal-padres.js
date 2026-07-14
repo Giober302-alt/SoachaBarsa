@@ -4,9 +4,9 @@
  *              Resumen por hijo + enlace a la ficha completa (alumno-detalle.html).
  */
 import { requireAuth, logout } from './auth.js';
-import { getCollection, formatDate, formatCOP, getGreeting, applyTheme, AppState } from './app.js';
+import { getCollection, formatDate, formatCOP, getGreeting, applyTheme, AppState, toast } from './app.js';
 import { COLLECTIONS, db } from './firebase-config.js';
-import { collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
+import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 import { renderNotificationBell } from './notifications.js';
 
 const STATUS_LABEL = { paid: 'Pagado', pending: 'Pendiente', overdue: 'Vencido', arrived: 'Presente', late: 'Tarde', absent: 'Ausente', excused: 'Excusa' };
@@ -71,6 +71,7 @@ const init = async () => {
 
   renderChildren(students, catName, coachName, attendance, payments);
   renderAnnouncements(announcements);
+  renderTournaments(students, studentIds);
 };
 
 const fetchByStudentIds = async (colName, ids) => {
@@ -173,5 +174,48 @@ const renderAnnouncements = (list) => {
 };
 
 const escapeHtml = (s = '') => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+const TSTATUS_LABEL = { pending: 'Pendiente', accepted: 'Aceptado', rejected: 'Rechazado' };
+const TSTATUS_BADGE = { pending: 'badge-pending', accepted: 'badge-paid', rejected: 'badge-overdue' };
+
+const renderTournaments = async (students, studentIds) => {
+  const el = document.getElementById('parentTournaments');
+  const [tournaments, regs] = await Promise.all([
+    getCollection(COLLECTIONS.TOURNAMENTS),
+    fetchByStudentIds('tournamentRegistrations', studentIds)
+  ]);
+  if (tournaments.length === 0) { el.innerHTML = `<p style="font-size:13px;color:var(--text-muted)">Sin torneos por ahora.</p>`; return; }
+
+  const sorted = tournaments.sort((a, b) => toMillis(b.date) - toMillis(a.date));
+  el.innerHTML = sorted.map(t => `
+    <div class="card-bara" style="padding:16px 20px;margin-bottom:12px">
+      <p style="font-weight:700;font-size:14px"><i class="fas fa-trophy" style="color:var(--color-gold);margin-right:6px"></i>${escapeHtml(t.name || '')}</p>
+      <p style="font-size:12px;color:var(--text-muted);margin:4px 0 10px">${formatDate(t.date)} · ${escapeHtml(t.venue || '')}</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${students.map(s => {
+          const reg = regs.find(r => r.tournamentId === t.id && r.studentId === s.id);
+          return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px">
+            <span>${escapeHtml(s.displayName)}</span>
+            ${reg
+              ? `<span class="badge-status ${TSTATUS_BADGE[reg.status] || 'badge-pending'}">${TSTATUS_LABEL[reg.status] || reg.status}</span>`
+              : `<button class="btn-outline-bara" style="padding:5px 10px" data-register="${t.id}|${s.id}">Inscribir</button>`}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+
+  el.querySelectorAll('[data-register]').forEach(btn => btn.addEventListener('click', async () => {
+    const [tournamentId, studentId] = btn.dataset.register.split('|');
+    const student = students.find(s => s.id === studentId);
+    await addDoc(collection(db, 'tournamentRegistrations'), {
+      tournamentId, studentId, studentName: student?.displayName || '', parentEmail: (student?.parentEmail || '').toLowerCase(),
+      status: 'pending', createdAt: serverTimestamp()
+    });
+    toast('Inscripción enviada. Queda pendiente de aceptación.', 'success');
+    renderTournaments(students, studentIds);
+  }));
+};
+
+const toMillis = (ts) => (ts?.toDate ? ts.toDate() : new Date(ts || 0)).getTime();
 
 document.addEventListener('DOMContentLoaded', init);
