@@ -53,8 +53,8 @@
     <div class="login-card" id="loginCard">
 
       <header class="login-card-header">
-        <h2 class="login-title">Bienvenido</h2>
-        <p class="login-subtitle">Inicia sesión para acceder al panel de administración.</p>
+        <h2 class="login-title" id="formTitle">Bienvenido</h2>
+        <p class="login-subtitle" id="formSubtitle">Inicia sesión para acceder al panel de administración.</p>
       </header>
 
       <form id="loginForm" novalidate autocomplete="off">
@@ -96,6 +96,42 @@
 
       </form>
 
+      <p style="text-align:center;margin-top:16px;font-size:13px">
+        <span id="toggleToRegisterWrap">¿Eres padre de familia y no tienes cuenta? <button type="button" id="toggleToRegister" style="background:none;border:none;color:var(--color-primary);font-weight:600;cursor:pointer;padding:0">Regístrate aquí</button></span>
+        <span id="toggleToLoginWrap" style="display:none">¿Ya tienes cuenta? <button type="button" id="toggleToLogin" style="background:none;border:none;color:var(--color-primary);font-weight:600;cursor:pointer;padding:0">Inicia sesión</button></span>
+      </p>
+
+      <!-- Formulario de registro de padres -->
+      <form id="registerForm" novalidate autocomplete="off" style="display:none">
+        <div class="form-group-bara">
+          <label class="form-label-bara" for="regName">Tu nombre completo</label>
+          <input class="form-control-bara" id="regName" placeholder="Nombre y apellido" required>
+        </div>
+        <div class="form-group-bara">
+          <label class="form-label-bara" for="regEmail">Tu correo electrónico</label>
+          <input type="email" class="form-control-bara" id="regEmail" placeholder="tu@correo.com" required>
+        </div>
+        <div class="form-group-bara">
+          <label class="form-label-bara" for="regPassword">Crea una contraseña</label>
+          <input type="password" class="form-control-bara" id="regPassword" placeholder="Mínimo 6 caracteres" required>
+        </div>
+        <div class="form-group-bara">
+          <label class="form-label-bara">Documento del alumno <span style="font-weight:400;color:var(--text-muted)">(el que registró la academia)</span></label>
+          <div style="display:flex;gap:8px">
+            <select id="regDocType" class="form-control-bara" style="max-width:100px">
+              <option>RC</option><option>TI</option><option>CC</option><option>CE</option>
+            </select>
+            <input id="regDocNumber" class="form-control-bara" placeholder="Número de documento" required style="flex:1">
+          </div>
+          <p style="font-size:11.5px;color:var(--text-muted);margin-top:6px">Este número es la clave que vincula tu cuenta con la ficha de tu hijo(a). Pídelo al administrador si no lo tienes.</p>
+        </div>
+        <button type="submit" class="btn-login" id="registerBtn">
+          <span id="registerBtnText">Crear mi cuenta</span>
+          <i class="fas fa-arrow-right" id="registerBtnIcon"></i>
+          <span id="registerSpinner" class="d-none"><i class="fas fa-circle-notch fa-spin"></i></span>
+        </button>
+      </form>
+
       <!-- Acceso rápido demo -->
       <div class="demo-section">
         <p class="demo-label">Acceso rápido — Demo</p>
@@ -135,6 +171,8 @@
   import { login, sendPasswordReset,
            onSessionChange }        from './auth.js';
   import { applyTheme }            from './app.js';
+  import { createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
+  import { collection, query, where, getDocs, doc, updateDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 
   // Aplicar tema guardado
   applyTheme(localStorage.getItem('barsa_theme') || 'light');
@@ -232,6 +270,98 @@
       pwdIn.value   = btn.dataset.password;
       form.dispatchEvent(new Event('submit'));
     });
+  });
+
+  // ── Alternar entre iniciar sesión y registrarse (padres) ──
+  const loginForm    = form;
+  const registerForm = document.getElementById('registerForm');
+  const formTitle    = document.getElementById('formTitle');
+  const formSubtitle = document.getElementById('formSubtitle');
+  const demoSection  = document.querySelector('.demo-section');
+
+  document.getElementById('toggleToRegister')?.addEventListener('click', () => {
+    loginForm.style.display = 'none';
+    registerForm.style.display = 'block';
+    demoSection.style.display = 'none';
+    document.getElementById('toggleToRegisterWrap').style.display = 'none';
+    document.getElementById('toggleToLoginWrap').style.display = 'inline';
+    formTitle.textContent = 'Crea tu cuenta de padre';
+    formSubtitle.textContent = 'Vincula tu cuenta con el número de documento de tu hijo(a).';
+  });
+
+  document.getElementById('toggleToLogin')?.addEventListener('click', () => {
+    registerForm.style.display = 'none';
+    loginForm.style.display = 'block';
+    demoSection.style.display = 'block';
+    document.getElementById('toggleToLoginWrap').style.display = 'none';
+    document.getElementById('toggleToRegisterWrap').style.display = 'inline';
+    formTitle.textContent = 'Bienvenido';
+    formSubtitle.textContent = 'Inicia sesión para acceder al panel de administración.';
+  });
+
+  // ── Registro de padres, vinculado por el documento del alumno ──
+  const registerBtn     = document.getElementById('registerBtn');
+  const registerBtnText = document.getElementById('registerBtnText');
+  const registerBtnIcon = document.getElementById('registerBtnIcon');
+  const registerSpinner = document.getElementById('registerSpinner');
+  const setRegLoading = (on) => {
+    registerBtn.disabled = on;
+    registerBtnText.textContent = on ? 'Creando cuenta…' : 'Crear mi cuenta';
+    registerBtnIcon.classList.toggle('d-none', on);
+    registerSpinner.classList.toggle('d-none', !on);
+  };
+
+  registerForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name     = document.getElementById('regName').value.trim();
+    const email    = document.getElementById('regEmail').value.trim().toLowerCase();
+    const password = document.getElementById('regPassword').value;
+    const docType  = document.getElementById('regDocType').value;
+    const docNumber= document.getElementById('regDocNumber').value.trim();
+
+    if (!name || !email || !password || !docNumber) {
+      Swal.fire({ toast:true, position:'top-end', icon:'warning', title:'Completa todos los campos', showConfirmButton:false, timer:2500 });
+      return;
+    }
+    if (password.length < 6) {
+      Swal.fire({ toast:true, position:'top-end', icon:'warning', title:'La contraseña debe tener al menos 6 caracteres', showConfirmButton:false, timer:3000 });
+      return;
+    }
+
+    setRegLoading(true);
+    let cred;
+    try {
+      // 1. Crear la cuenta de autenticación primero (para poder leer/escribir con permisos de usuario autenticado)
+      cred = await createUserWithEmailAndPassword(auth, email, password);
+
+      // 2. Buscar al alumno por número de documento (clave de vinculación) y reclamarlo
+      const snap = await getDocs(query(collection(db, 'students'), where('documentNumber', '==', docNumber)));
+      if (snap.empty) {
+        throw { code: 'not-found', message: 'No encontramos un alumno con ese número de documento. Verifica o contacta al administrador.' };
+      }
+      const studentDoc = snap.docs.find(d => (d.data().documentType || 'RC') === docType) || snap.docs[0];
+      const studentData = studentDoc.data();
+      if (studentData.parentEmail) {
+        throw { code: 'already-linked', message: 'Este alumno ya tiene una cuenta de padre vinculada. Contacta al administrador si esto es un error.' };
+      }
+      await updateDoc(doc(db, 'students', studentDoc.id), { parentEmail: email, updatedAt: serverTimestamp() });
+
+      // 3. Crear el perfil de usuario (rol padre)
+      await setDoc(doc(db, 'users', cred.user.uid), {
+        displayName: name, email, role: 'parent', active: true,
+        createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+      });
+
+      Swal.fire({ toast:true, position:'top-end', icon:'success', title:`¡Cuenta creada! Vinculada a ${studentData.displayName}.`, showConfirmButton:false, timer:2000 });
+      setTimeout(() => { window.location.href = './portal-padres.html'; }, 1200);
+
+    } catch (err) {
+      // Si algo falló después de crear el usuario de Auth, lo eliminamos para poder reintentar.
+      if (cred?.user) { try { await cred.user.delete(); } catch (e2) {} }
+      const msg = err.message || (err.code === 'auth/email-already-in-use' ? 'Ya existe una cuenta con ese correo.' : 'Error al crear la cuenta.');
+      Swal.fire({ toast:true, position:'top-end', icon:'error', title: msg, showConfirmButton:false, timer:5000 });
+      setRegLoading(false);
+    }
   });
 </script>
 

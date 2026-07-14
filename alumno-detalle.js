@@ -7,7 +7,7 @@
  *              documentos y fotos de SU hijo (reforzado por firestore.rules).
  */
 import { requireAuth, getCurrentProfile } from './auth.js';
-import { initShell, toast, showConfirm, hideLoader, showLoader, formatDate, getCollection, applyTheme, AppState } from './app.js';
+import { initShell, toast, showConfirm, hideLoader, showLoader, formatDate, formatCOP, getCollection, applyTheme, AppState } from './app.js';
 import { COLLECTIONS, db, storage } from './firebase-config.js';
 import {
   doc, getDoc, updateDoc, addDoc, deleteDoc, collection, query, where, orderBy,
@@ -60,7 +60,7 @@ const init = async () => {
   renderGeneral();
   renderMedical();
   renderContact();
-  await Promise.all([renderDocuments(), renderPhotos(), renderPerformance()]);
+  await Promise.all([renderDocuments(), renderPhotos(), renderPerformance(), renderPayments()]);
   hideLoader();
 };
 
@@ -271,6 +271,8 @@ const openContactForm = () => {
         <input id="cAddress" class="form-control-bara swal2-input" style="margin:0 0 12px" value="${escapeHtml(c.address || '')}">
         <label class="form-label-bara">Teléfono(s)</label>
         <input id="cPhones" class="form-control-bara swal2-input" style="margin:0 0 12px" value="${escapeHtml(c.phones || '')}">
+        <label class="form-label-bara">Teléfono del acudiente (WhatsApp)</label>
+        <input id="cParentPhone" class="form-control-bara swal2-input" style="margin:0 0 12px" placeholder="57 300 1234567" value="${escapeHtml(student.parentPhone || '')}">
         <label class="form-label-bara">Personas autorizadas para recoger al niño(a)</label>
         <textarea id="cPickup" class="form-control-bara swal2-textarea" style="margin:0">${escapeHtml(c.authorizedPickup || '')}</textarea>
       </div>`,
@@ -281,12 +283,14 @@ const openContactForm = () => {
         address: document.getElementById('cAddress').value.trim(),
         phones: document.getElementById('cPhones').value.trim(),
         authorizedPickup: document.getElementById('cPickup').value.trim()
-      }
+      },
+      parentPhone: document.getElementById('cParentPhone').value.trim() || null
     })
   }).then(async (res) => {
     if (!res.isConfirmed) return;
     await updateDoc(doc(db, COLLECTIONS.STUDENTS, studentId), { ...res.value, updatedAt: serverTimestamp() });
     student.contact = res.value.contact;
+    student.parentPhone = res.value.parentPhone;
     toast('Datos actualizados', 'success');
     renderContact();
   });
@@ -463,6 +467,83 @@ const addPerformanceNote = async () => {
   document.getElementById('perfText').value = '';
   toast('Observación publicada', 'success');
   renderPerformance();
+};
+
+// ─── Pagos ──────────────────────────────────────────────────────────────────
+const PAY_STATUS_LABEL = { paid: 'Pagado', pending: 'Pendiente', overdue: 'Vencido' };
+const PAY_STATUS_BADGE = { paid: 'badge-paid', pending: 'badge-pending', overdue: 'badge-overdue' };
+const PAY_DOT = { paid: '🟢', pending: '🟡', overdue: '🔴' };
+
+const renderPayments = async () => {
+  const el = document.getElementById('tab-payments');
+  el.innerHTML = `
+    ${perms.core ? `<div class="card-bara" style="padding:18px;margin-bottom:16px">
+      <button class="btn-primary-bara" id="btnAddPayment"><i class="fas fa-plus"></i> Registrar pago</button>
+    </div>` : ''}
+    <div id="paymentsList"><div class="skeleton-card"></div></div>`;
+
+  document.getElementById('btnAddPayment')?.addEventListener('click', openPaymentForm);
+
+  const snap = await getDocs(query(collection(db, 'payments'), where('studentId', '==', studentId)));
+  const list = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+  const listEl = document.getElementById('paymentsList');
+  if (list.length === 0) { listEl.innerHTML = `<div class="empty-widget"><i class="fas fa-credit-card"></i><p>Sin pagos registrados.</p></div>`; return; }
+
+  listEl.innerHTML = list.map(p => `
+    <div class="card-bara" style="padding:14px 18px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:18px">${PAY_DOT[p.status] || ''}</span>
+      <div style="flex:1;min-width:0">
+        <p style="font-weight:600;font-size:13.5px">${formatCOP(p.amount || 0)}</p>
+        <p style="font-size:11.5px;color:var(--text-muted)">${formatDate(p.createdAt)}${p.dueDate ? ' · vence ' + formatDate(p.dueDate) : ''}</p>
+      </div>
+      <span class="badge-status ${PAY_STATUS_BADGE[p.status] || 'badge-pending'}">${PAY_STATUS_LABEL[p.status] || p.status}</span>
+      ${p.receiptURL ? `<a href="${p.receiptURL}" target="_blank" rel="noopener" class="btn-outline-bara" style="padding:6px 10px"><i class="fas fa-receipt"></i></a>` : ''}
+      ${perms.core ? `<button class="btn-outline-bara" style="padding:6px 10px;color:#dc3545;border-color:#dc3545" data-del-pay="${p.id}"><i class="fas fa-trash"></i></button>` : ''}
+    </div>`).join('');
+
+  listEl.querySelectorAll('[data-del-pay]').forEach(btn => btn.addEventListener('click', async () => {
+    const ok = await showConfirm('¿Eliminar pago?', '', 'Eliminar');
+    if (!ok) return;
+    await deleteDoc(doc(db, 'payments', btn.dataset.delPay));
+    toast('Pago eliminado', 'success');
+    renderPayments();
+  }));
+};
+
+const openPaymentForm = () => {
+  Swal.fire({
+    title: 'Registrar pago',
+    html: `
+      <div style="text-align:left">
+        <label class="form-label-bara">Monto (COP)</label>
+        <input id="payAmount" type="number" class="form-control-bara swal2-input" style="margin:0 0 12px" value="80000">
+        <label class="form-label-bara">Fecha de vencimiento</label>
+        <input id="payDue" type="date" class="form-control-bara swal2-input" style="margin:0 0 12px">
+        <label class="form-label-bara">Estado</label>
+        <select id="payStatus" class="form-control-bara swal2-input" style="margin:0">
+          ${Object.entries(PAY_STATUS_LABEL).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}
+        </select>
+      </div>`,
+    showCancelButton: true, confirmButtonText: 'Crear', cancelButtonText: 'Cancelar', confirmButtonColor: '#8B0000',
+    focusConfirm: false,
+    preConfirm: () => {
+      const dueVal = document.getElementById('payDue').value;
+      return {
+        studentId,
+        amount: Number(document.getElementById('payAmount').value) || 0,
+        status: document.getElementById('payStatus').value,
+        dueDate: dueVal ? Timestamp.fromDate(new Date(dueVal + 'T00:00:00')) : null
+      };
+    }
+  }).then(async (res) => {
+    if (!res.isConfirmed) return;
+    await addDoc(collection(db, 'payments'), { ...res.value, createdAt: serverTimestamp() });
+    toast('Pago registrado', 'success');
+    if (student.parentEmail) {
+      notify({ parentEmail: student.parentEmail, title: `Nuevo pago de ${student.displayName}`, body: `${PAY_STATUS_LABEL[res.value.status]} · ${formatCOP(res.value.amount)}` });
+    }
+    renderPayments();
+  });
 };
 
 const escapeHtml = (s = '') => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));

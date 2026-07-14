@@ -41,11 +41,18 @@ service cloud.firestore {
     // contacto/adicional y la ficha médica (nunca categoría, entrenador,
     // estado ni el correo de vinculación).
     match /students/{id} {
-      allow read:   if isStaff() || isParentOfDoc(id);
+      allow read:   if isStaff() || isParentOfDoc(id) || resource.data.parentEmail == null;
       allow write:  if isCoordinator();
       allow update: if isParentOfDoc(id)
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['contact', 'medical', 'photoURL', 'updatedAt']);
+             .hasOnly(['contact', 'medical', 'photoURL', 'parentPhone', 'updatedAt']);
+      // Autorregistro de padres: un usuario reci\u00e9n autenticado (a\u00fan sin perfil
+      // en /users) reclama al alumno usando el n\u00famero de documento (ver
+      // login.html). Solo si el alumno a\u00fan no tiene un correo de padre
+      // vinculado, y solo puede tocar ese campo, con SU PROPIO correo.
+      allow update: if isSignedIn() && resource.data.parentEmail == null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['parentEmail', 'updatedAt'])
+        && request.resource.data.parentEmail == myEmail();
     }
 
     match /categories/{id} {

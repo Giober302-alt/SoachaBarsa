@@ -100,6 +100,13 @@ const openForm = (existing = null) => {
       <div style="text-align:left">
         <label class="form-label-bara">Nombre completo</label>
         <input id="swalName" class="form-control-bara swal2-input" style="margin:0 0 12px" value="${existing ? escapeHtml(existing.displayName || '') : ''}">
+        <label class="form-label-bara">Documento del alumno <span style="font-weight:400;color:var(--text-muted)">(clave para que el padre se registre)</span></label>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <select id="swalDocType" class="form-control-bara swal2-input" style="margin:0;max-width:100px">
+            ${['RC','TI','CC','CE'].map(t => `<option ${existing?.documentType === t ? 'selected' : ''}>${t}</option>`).join('')}
+          </select>
+          <input id="swalDocNumber" class="form-control-bara swal2-input" style="margin:0;flex:1" placeholder="Número" value="${existing ? escapeHtml(existing.documentNumber || '') : ''}">
+        </div>
         <label class="form-label-bara">Categorías <span style="font-weight:400;color:var(--text-muted)">(puede pertenecer a varias)</span></label>
         <div style="border:1.5px solid var(--border-color);border-radius:10px;padding:8px 14px;margin:0 0 12px;max-height:150px;overflow-y:auto">
           ${checkboxes || '<p style="font-size:12.5px;color:var(--text-muted)">Crea categorías primero.</p>'}
@@ -125,6 +132,8 @@ const openForm = (existing = null) => {
       const birthVal = document.getElementById('swalBirth').value;
       return {
         displayName,
+        documentType: document.getElementById('swalDocType').value,
+        documentNumber: document.getElementById('swalDocNumber').value.trim(),
         categoryIds: Array.from(document.querySelectorAll('.swalCategoryChk:checked')).map(el => el.value),
         categoryId: null,
         birthDate: birthVal ? Timestamp.fromDate(new Date(birthVal + 'T00:00:00')) : null,
