@@ -65,17 +65,28 @@ export const toggleSidebar = () => {
   const sidebar = document.getElementById('sidebar');
   const main    = document.getElementById('mainContent');
   const overlay = document.getElementById('sidebarOverlay');
+  const isMobile = window.innerWidth < 992;
   AppState.sidebarOpen = !AppState.sidebarOpen;
-  sidebar?.classList.toggle('collapsed', !AppState.sidebarOpen);
-  main?.classList.toggle('sidebar-collapsed', !AppState.sidebarOpen);
-  if (AppState.sidebarOpen && window.innerWidth < 992) overlay?.classList.add('active');
-  else overlay?.classList.remove('active');
+
+  if (isMobile) {
+    sidebar?.classList.toggle('mobile-open', AppState.sidebarOpen);
+    overlay?.classList.toggle('active', AppState.sidebarOpen);
+  } else {
+    sidebar?.classList.toggle('collapsed', !AppState.sidebarOpen);
+    main?.classList.toggle('sidebar-collapsed', !AppState.sidebarOpen);
+    overlay?.classList.remove('active');
+  }
 };
 
 const closeSidebar = () => {
   AppState.sidebarOpen = false;
-  document.getElementById('sidebar')?.classList.add('collapsed');
-  document.getElementById('mainContent')?.classList.add('sidebar-collapsed');
+  const isMobile = window.innerWidth < 992;
+  if (isMobile) {
+    document.getElementById('sidebar')?.classList.remove('mobile-open');
+  } else {
+    document.getElementById('sidebar')?.classList.add('collapsed');
+    document.getElementById('mainContent')?.classList.add('sidebar-collapsed');
+  }
   document.getElementById('sidebarOverlay')?.classList.remove('active');
 };
 
