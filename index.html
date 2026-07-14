@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barsa Soacha Academy</title>
+  <meta name="description" content="Sistema de gestión para la Academia de Fútbol Barsa Soacha">
+  <link rel="icon" type="image/svg+xml" href="./logo-barsa.svg">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #0D1B3E;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .splash-logo {
+      width: 120px;
+      animation: pulse 1.6s ease infinite;
+      filter: drop-shadow(0 6px 18px rgba(0,0,0,.5));
+    }
+    .splash-name {
+      font-family: 'Bebas Neue', 'Impact', sans-serif;
+      font-size: 40px;
+      letter-spacing: 5px;
+      color: #fff;
+      margin-top: 4px;
+    }
+    .splash-sub {
+      font-size: 11px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.4);
+    }
+    .splash-bar {
+      width: 180px; height: 3px;
+      background: rgba(255,255,255,.1);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .splash-bar-fill {
+      height: 100%;
+      background: #F0C040;
+      border-radius: 99px;
+      animation: loading 2s ease forwards;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50%       { transform: scale(1.04); }
+    }
+    @keyframes loading {
+      from { width: 0; }
+      to   { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Logo Barsa Soacha — reemplaza logo-barsa.svg para cambiar el escudo -->
+  <img class="splash-logo" src="./logo-barsa.svg" alt="Escudo Barsa Soacha Academy">
+
+  <div>
+    <div class="splash-name">BARSA SOACHA</div>
+    <div class="splash-sub" style="text-align:center">Academia de Fútbol</div>
+  </div>
+  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+
+  <script type="module">
+    import { auth }               from './firebase-config.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
+
+    // Aplicar tema guardado antes de renderizar
+    const t = localStorage.getItem('barsa_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', t);
+
+    onAuthStateChanged(auth, (user) => {
+      setTimeout(() => {
+        window.location.href = user ? './dashboard.html' : './login.html';
+      }, 2000);
+    });
+  </script>
+</body>
+</html>

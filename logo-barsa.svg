@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" width="200" height="220">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#F5D060;stop-opacity:1"></stop>
+      <stop offset="50%" style="stop-color:#D4A017;stop-opacity:1"></stop>
+      <stop offset="100%" style="stop-color:#A07010;stop-opacity:1"></stop>
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0D1B3E;stop-opacity:1"></stop>
+      <stop offset="100%" style="stop-color:#162850;stop-opacity:1"></stop>
+    </linearGradient>
+    <linearGradient id="crimsonGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#9B1010;stop-opacity:1"></stop>
+      <stop offset="100%" style="stop-color:#6B0000;stop-opacity:1"></stop>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="rgba(0,0,0,0.5)"></feDropShadow>
+    </filter>
+  </defs>
+
+  
+  <path d="M100,8 L185,35 L185,120 Q185,185 100,212 Q15,185 15,120 L15,35 Z" fill="url(#goldGrad)" filter="url(#shadow)"></path>
+
+  
+  <path d="M100,17 L177,42 L177,120 Q177,178 100,203 Q23,178 23,120 L23,42 Z" fill="url(#shieldGrad)"></path>
+
+  
+  <clipPath id="clipTL">
+    <path d="M100,17 L177,42 L177,110 L100,110 L100,17 Z"></path>
+  </clipPath>
+  <g clip-path="url(#clipTL)">
+    <rect x="23" y="17" width="154" height="93" fill="#8B0000"></rect>
+    
+    <rect x="40" y="17" width="14" height="93" fill="url(#goldGrad)" opacity="0.85"></rect>
+    <rect x="70" y="17" width="14" height="93" fill="url(#goldGrad)" opacity="0.85"></rect>
+    <rect x="100" y="17" width="14" height="93" fill="url(#goldGrad)" opacity="0.85"></rect>
+    <rect x="130" y="17" width="14" height="93" fill="url(#goldGrad)" opacity="0.85"></rect>
+    <rect x="160" y="17" width="14" height="93" fill="url(#goldGrad)" opacity="0.85"></rect>
+  </g>
+
+  
+  <clipPath id="clipTR">
+    <path d="M100,17 L100,110 L177,110 L177,42 Z"></path>
+  </clipPath>
+  <g clip-path="url(#clipTR)">
+    <rect x="100" y="17" width="77" height="93" fill="#FFFFFF"></rect>
+    
+    <rect x="136" y="17" width="7" height="93" fill="#C0001A" opacity="0.7"></rect>
+    <rect x="100" y="50" width="77" height="7" fill="#C0001A" opacity="0.7"></rect>
+  </g>
+
+  
+  <line x1="23" y1="110" x2="177" y2="110" stroke="url(#goldGrad)" stroke-width="4"></line>
+  
+  <line x1="100" y1="17" x2="100" y2="110" stroke="url(#goldGrad)" stroke-width="3"></line>
+
+  
+  <clipPath id="clipBottom">
+    <path d="M23,110 L177,110 L177,120 Q177,178 100,203 Q23,178 23,120 Z"></path>
+  </clipPath>
+  <g clip-path="url(#clipBottom)">
+    <rect x="23" y="110" width="154" height="100" fill="#0D1B3E"></rect>
+    
+    <rect x="23" y="108" width="20" height="100" fill="#8B0000"></rect>
+    <rect x="43" y="108" width="20" height="100" fill="#0D1B3E"></rect>
+    <rect x="63" y="108" width="20" height="100" fill="#8B0000"></rect>
+    <rect x="83" y="108" width="20" height="100" fill="#0D1B3E"></rect>
+    <rect x="103" y="108" width="20" height="100" fill="#8B0000"></rect>
+    <rect x="123" y="108" width="20" height="100" fill="#0D1B3E"></rect>
+    <rect x="143" y="108" width="20" height="100" fill="#8B0000"></rect>
+    <rect x="163" y="108" width="20" height="100" fill="#0D1B3E"></rect>
+  </g>
+
+  
+  <circle cx="100" cy="160" r="22" fill="white" stroke="#111" stroke-width="1.5"></circle>
+  
+  <polygon points="100,142 108,148 106,157 94,157 92,148" fill="#111"></polygon>
+  <polygon points="100,178 108,172 114,178 111,187 89,187 86,178 92,172" fill="#111"></polygon>
+  <polygon points="78,157 82,148 92,148 94,157 86,163" fill="#111"></polygon>
+  <polygon points="122,157 118,148 108,148 106,157 114,163" fill="#111"></polygon>
+
+  
+  <rect x="48" y="100" width="104" height="22" fill="#0D1B3E" rx="2"></rect>
+  <text x="100" y="116" font-family="Arial Black, sans-serif" font-size="15" font-weight="900" fill="url(#goldGrad)" text-anchor="middle" letter-spacing="3">BFC</text>
+
+  
+  <g fill="url(#goldGrad)">
+    <rect x="82" y="4" width="8" height="14" rx="2"></rect>
+    <rect x="96" y="1" width="8" height="17" rx="2"></rect>
+    <rect x="110" y="4" width="8" height="14" rx="2"></rect>
+    
+    <circle cx="86" cy="3" r="3"></circle>
+    <circle cx="100" cy="0" r="3"></circle>
+    <circle cx="114" cy="3" r="3"></circle>
+  </g>
+</svg>

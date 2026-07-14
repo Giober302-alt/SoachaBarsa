@@ -1,0 +1,17 @@
+rules_version = '2';
+
+// Storage — Barsa Soacha Academy
+// Fotos de perfil, comprobantes de pago, imágenes de comunicados, etc.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() { return request.auth != null; }
+
+    // Cualquier persona autenticada puede ver los archivos de la app
+    // (fotos de alumnos, logo, adjuntos de comunicados).
+    match /{allPaths=**} {
+      allow read:  if isSignedIn();
+      allow write: if isSignedIn() && request.resource.size < 5 * 1024 * 1024; // 5MB máx.
+    }
+  }
+}

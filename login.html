@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar sesión — Barsa Soacha Academy</title>
+  <meta name="theme-color" content="#8B0000">
+  <link rel="icon" type="image/svg+xml" href="./logo-barsa.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Librerías CDN -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.12.4/sweetalert2.min.css" rel="stylesheet">
+
+  <!-- CSS propios — ESTRUCTURA PLANA: sin carpeta css/ -->
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./responsive.css">
+</head>
+<body>
+
+<div class="login-page">
+
+  <!-- ── Panel izquierdo: identidad visual ── -->
+  <aside class="login-brand-panel">
+    <div class="login-brand-content">
+
+      <!-- Logo Barsa Soacha — reemplaza logo-barsa.svg para cambiar el escudo -->
+      <div class="login-logo" style="background:transparent;box-shadow:none;width:130px;height:auto">
+        <img src="./logo-barsa.svg" alt="Escudo Barsa Soacha Academy" style="width:130px;filter:drop-shadow(0 6px 20px rgba(0,0,0,.6))">
+      </div>
+
+      <h1 class="login-brand-name">BARSA SOACHA</h1>
+      <p class="login-brand-sub">Academia de Fútbol</p>
+
+      <ul class="login-features">
+        <li><i class="fas fa-users-cog"></i> Gestión completa de alumnos</li>
+        <li><i class="fas fa-clipboard-check"></i> Control de asistencia en tiempo real</li>
+        <li><i class="fas fa-credit-card"></i> Administración de pagos</li>
+        <li><i class="fas fa-trophy"></i> Torneos y partidos</li>
+        <li><i class="fas fa-chart-line"></i> Reportes y estadísticas</li>
+        <li><i class="fas fa-bell"></i> Comunicados a padres</li>
+      </ul>
+
+    </div>
+  </aside>
+
+  <!-- ── Panel derecho: formulario ── -->
+  <main class="login-form-panel">
+    <div class="login-card" id="loginCard">
+
+      <header class="login-card-header">
+        <h2 class="login-title">Bienvenido</h2>
+        <p class="login-subtitle">Inicia sesión para acceder al panel de administración.</p>
+      </header>
+
+      <form id="loginForm" novalidate autocomplete="off">
+
+        <div class="form-group-bara">
+          <label class="form-label-bara" for="loginEmail">Correo electrónico</label>
+          <div class="input-icon-wrap">
+            <i class="fas fa-envelope input-icon"></i>
+            <input type="email" id="loginEmail" class="form-control-bara"
+              placeholder="tu@correo.com" autocomplete="email" required>
+          </div>
+        </div>
+
+        <div class="form-group-bara">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <label class="form-label-bara mb-0" for="loginPassword">Contraseña</label>
+            <button type="button" id="forgotPasswordBtn"
+              style="font-size:12px;color:var(--color-primary);background:none;border:none;cursor:pointer;padding:0">
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
+          <div class="input-icon-wrap">
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" id="loginPassword" class="form-control-bara"
+              placeholder="••••••••" autocomplete="current-password" required>
+            <button type="button" class="toggle-password" id="togglePassword" aria-label="Mostrar contraseña">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-login" id="loginBtn">
+          <span id="loginBtnText">Ingresar al sistema</span>
+          <i class="fas fa-arrow-right" id="loginBtnIcon"></i>
+          <span id="loginSpinner" class="d-none">
+            <i class="fas fa-circle-notch fa-spin"></i>
+          </span>
+        </button>
+
+      </form>
+
+      <!-- Acceso rápido demo -->
+      <div class="demo-section">
+        <p class="demo-label">Acceso rápido — Demo</p>
+        <div class="demo-grid">
+          <button type="button" class="demo-btn" id="demoAdmin"
+            data-email="admin@barsa.co" data-password="Admin2025*">
+            <i class="fas fa-user-shield"></i> Administrador
+          </button>
+          <button type="button" class="demo-btn" id="demoCoach"
+            data-email="coach@barsa.co" data-password="Coach123*">
+            <i class="fas fa-whistle"></i> Entrenador
+          </button>
+          <button type="button" class="demo-btn" id="demoParent"
+            data-email="padre@barsa.co" data-password="Padre123*">
+            <i class="fas fa-user-friends"></i> Padre
+          </button>
+        </div>
+      </div>
+
+      <footer style="text-align:center;margin-top:24px">
+        <p style="font-size:11px;color:var(--text-muted)">
+          Barsa Soacha Academy &copy; 2025 · v1.1.0 · Licencia MIT
+        </p>
+      </footer>
+
+    </div>
+  </main>
+
+</div><!-- /login-page -->
+
+<!-- Scripts CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.12.4/sweetalert2.all.min.js"></script>
+
+<!-- Módulos ES — RUTAS PLANAS: sin carpeta js/ -->
+<script type="module">
+  import { auth, db }              from './firebase-config.js';
+  import { login, sendPasswordReset,
+           onSessionChange }        from './auth.js';
+  import { applyTheme }            from './app.js';
+
+  // Aplicar tema guardado
+  applyTheme(localStorage.getItem('barsa_theme') || 'light');
+
+  // Si ya hay sesión → ir al dashboard
+  const unsub = onSessionChange((user, profile) => {
+    unsub();
+    if (user && profile) window.location.href = './dashboard.html';
+  });
+
+  // Animar tarjeta al cargar
+  const card = document.getElementById('loginCard');
+  if (card) {
+    card.style.cssText = 'opacity:0;transform:translateY(24px)';
+    setTimeout(() => {
+      card.style.cssText = 'opacity:1;transform:translateY(0);transition:all .55s cubic-bezier(.16,1,.3,1)';
+    }, 120);
+  }
+
+  // ── Formulario ──
+  const form    = document.getElementById('loginForm');
+  const emailIn = document.getElementById('loginEmail');
+  const pwdIn   = document.getElementById('loginPassword');
+  const loginBtn= document.getElementById('loginBtn');
+  const btnTxt  = document.getElementById('loginBtnText');
+  const btnIco  = document.getElementById('loginBtnIcon');
+  const spinner = document.getElementById('loginSpinner');
+
+  const setLoading = (on) => {
+    loginBtn.disabled    = on;
+    btnTxt.textContent   = on ? 'Ingresando…' : 'Ingresar al sistema';
+    btnIco.classList.toggle('d-none', on);
+    spinner.classList.toggle('d-none', !on);
+  };
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = emailIn.value.trim();
+    const pwd   = pwdIn.value;
+    if (!email || !pwd) {
+      Swal.fire({ toast:true, position:'top-end', icon:'warning',
+        title:'Completa todos los campos', showConfirmButton:false, timer:2500 });
+      return;
+    }
+    setLoading(true);
+    const result = await login(email, pwd);
+    if (result.success) {
+      Swal.fire({ toast:true, position:'top-end', icon:'success',
+        title:`¡Bienvenido, ${result.profile?.displayName?.split(' ')[0] || ''}!`,
+        showConfirmButton:false, timer:1200 });
+      setTimeout(() => { window.location.href = './dashboard.html'; }, 900);
+    } else {
+      setLoading(false);
+      Swal.fire({ toast:true, position:'top-end', icon:'error',
+        title: result.error, showConfirmButton:false, timer:4000 });
+      form.classList.add('shake');
+      setTimeout(() => form.classList.remove('shake'), 500);
+    }
+  });
+
+  // Toggle contraseña
+  document.getElementById('togglePassword')?.addEventListener('click', function() {
+    const isText = pwdIn.type === 'text';
+    pwdIn.type = isText ? 'password' : 'text';
+    this.querySelector('i').className = isText ? 'fas fa-eye' : 'fas fa-eye-slash';
+  });
+
+  // Olvidé contraseña
+  document.getElementById('forgotPasswordBtn')?.addEventListener('click', async () => {
+    const { value: email } = await Swal.fire({
+      title:'Restablecer contraseña', input:'email',
+      inputLabel:'Correo electrónico registrado', inputPlaceholder:'tu@correo.com',
+      confirmButtonColor:'#8B0000', confirmButtonText:'Enviar enlace',
+      showCancelButton:true, cancelButtonText:'Cancelar'
+    });
+    if (email) {
+      const r = await sendPasswordReset(email);
+      Swal.fire({ toast:true, position:'top-end',
+        icon: r.success ? 'success' : 'error',
+        title: r.success ? 'Enlace enviado. Revisa tu correo.' : r.error,
+        showConfirmButton:false, timer:4000 });
+    }
+  });
+
+  // Botones demo
+  document.querySelectorAll('.demo-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      emailIn.value = btn.dataset.email;
+      pwdIn.value   = btn.dataset.password;
+      form.dispatchEvent(new Event('submit'));
+    });
+  });
+</script>
+
+</body>
+</html>

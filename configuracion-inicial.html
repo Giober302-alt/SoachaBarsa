@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuración inicial — Barsa Soacha Academy</title>
+  <link rel="icon" type="image/svg+xml" href="./logo-barsa.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./responsive.css">
+  <style>
+    body{ background:var(--bg-app); }
+    .setup-wrap{ max-width:560px; margin:48px auto; padding:0 20px 60px; }
+    .setup-logo{ width:64px; display:block; margin:0 auto 12px; }
+    .setup-title{ font-family:var(--font-display); font-size:30px; text-align:center; letter-spacing:2px; color:var(--text-primary); }
+    .setup-sub{ text-align:center; color:var(--text-muted); font-size:13px; margin-bottom:28px; }
+    .setup-step{ margin-bottom:20px; opacity:.4; pointer-events:none; transition:opacity .3s; }
+    .setup-step.active{ opacity:1; pointer-events:all; }
+    .setup-step.done{ opacity:.6; pointer-events:none; }
+    .step-num{ display:inline-flex; align-items:center; justify-content:center; width:22px;height:22px; border-radius:50%; background:var(--color-primary); color:#fff; font-size:12px; font-weight:700; margin-right:8px; }
+    .step-title{ font-weight:700; font-size:15px; }
+    .warn-box{ background:#ffc10715; border:1px solid #ffc10740; border-radius:var(--radius-md); padding:12px 14px; font-size:12.5px; color:#8a6400; margin-bottom:24px; }
+    .log-box{ background:var(--bg-surface-2); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:12px 14px; font-family:var(--font-mono); font-size:11.5px; color:var(--text-secondary); max-height:200px; overflow:auto; margin-top:12px; }
+    .log-box div{ margin-bottom:4px; }
+  </style>
+</head>
+<body>
+
+<div class="setup-wrap">
+  <img class="setup-logo" src="./logo-barsa.svg" alt="Barsa Soacha">
+  <h1 class="setup-title">CONFIGURACIÓN INICIAL</h1>
+  <p class="setup-sub">Barsa Soacha Academy · Solo úsalo una vez</p>
+
+  <div class="warn-box">
+    <i class="fas fa-triangle-exclamation"></i>
+    Esta página crea el primer usuario administrador. Cuando termines,
+    <strong>bórrala o renómbrala</strong> — ver INSTRUCCIONES.md, paso 6.
+  </div>
+
+  <!-- Paso 1 -->
+  <div class="setup-step active card-bara" id="step1" style="padding:20px">
+    <p class="step-title"><span class="step-num">1</span> Iniciar sesión con la cuenta creada en Firebase</p>
+    <p style="font-size:12.5px;color:var(--text-muted);margin:6px 0 14px">
+      Primero crea el usuario en Firebase Console → Authentication → Add user.
+    </p>
+    <div class="form-group-bara">
+      <label class="form-label-bara">Correo</label>
+      <input class="form-control-bara" id="setupEmail" type="email" placeholder="admin@tuacademia.com">
+    </div>
+    <div class="form-group-bara">
+      <label class="form-label-bara">Contraseña</label>
+      <input class="form-control-bara" id="setupPassword" type="password" placeholder="••••••••">
+    </div>
+    <button class="btn-primary-bara" id="btnSignIn">Iniciar sesión <i class="fas fa-arrow-right"></i></button>
+  </div>
+
+  <!-- Paso 2 -->
+  <div class="setup-step card-bara" id="step2" style="padding:20px;margin-top:16px">
+    <p class="step-title"><span class="step-num">2</span> Crear perfil de administrador</p>
+    <div class="form-group-bara" style="margin-top:12px">
+      <label class="form-label-bara">Nombre completo</label>
+      <input class="form-control-bara" id="setupName" placeholder="Tu nombre">
+    </div>
+    <button class="btn-primary-bara" id="btnCreateProfile">Crear perfil admin <i class="fas fa-user-shield"></i></button>
+  </div>
+
+  <!-- Paso 3 -->
+  <div class="setup-step card-bara" id="step3" style="padding:20px;margin-top:16px">
+    <p class="step-title"><span class="step-num">3</span> Datos de ejemplo (opcional)</p>
+    <p style="font-size:12.5px;color:var(--text-muted);margin:6px 0 14px">
+      Crea alumnos, categorías, pagos y eventos de ejemplo para ver el dashboard con datos.
+      Puedes omitir este paso si ya vas a cargar tus datos reales.
+    </p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn-primary-bara" id="btnSeed">Sembrar datos de ejemplo <i class="fas fa-database"></i></button>
+      <a class="btn-outline-bara" href="./dashboard.html">Omitir e ir al dashboard <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="log-box" id="seedLog" style="display:none"></div>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
+  import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
+
+  let currentUser = null;
+
+  const goStep = (n) => {
+    document.querySelectorAll('.setup-step').forEach((el, i) => {
+      el.classList.toggle('active', i === n - 1);
+      el.classList.toggle('done', i < n - 1);
+    });
+  };
+
+  document.getElementById('btnSignIn').addEventListener('click', async () => {
+    const email = document.getElementById('setupEmail').value.trim();
+    const pwd   = document.getElementById('setupPassword').value;
+    if (!email || !pwd) { alert('Completa correo y contraseña.'); return; }
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, pwd);
+      currentUser = cred.user;
+      goStep(2);
+    } catch (err) {
+      alert('No se pudo iniciar sesión: ' + err.message + '\n\n¿Ya creaste este usuario en Firebase Console → Authentication?');
+    }
+  });
+
+  document.getElementById('btnCreateProfile').addEventListener('click', async () => {
+    const name = document.getElementById('setupName').value.trim();
+    if (!name) { alert('Escribe tu nombre.'); return; }
+    if (!currentUser) { alert('Primero inicia sesión.'); return; }
+    try {
+      await setDoc(doc(db, 'users', currentUser.uid), {
+        displayName: name,
+        email: currentUser.email,
+        role: 'admin',
+        active: true,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      goStep(3);
+    } catch (err) {
+      alert('Error creando el perfil: ' + err.message);
+    }
+  });
+
+  document.getElementById('btnSeed').addEventListener('click', async () => {
+    const btn = document.getElementById('btnSeed');
+    const logBox = document.getElementById('seedLog');
+    btn.disabled = true;
+    btn.textContent = 'Sembrando datos…';
+    logBox.style.display = 'block';
+    try {
+      const { seedDemoData } = await import('./seed-data.js');
+      const log = await seedDemoData();
+      logBox.innerHTML = log.map(l => `<div><i class="fas fa-check" style="color:#198754"></i> ${l}</div>`).join('');
+      logBox.innerHTML += `<div style="margin-top:8px"><a href="./dashboard.html">Ir al dashboard →</a></div>`;
+    } catch (err) {
+      logBox.innerHTML = `<div style="color:#dc3545">Error: ${err.message}</div>`;
+    }
+    btn.disabled = false;
+    btn.innerHTML = 'Sembrar datos de ejemplo <i class="fas fa-database"></i>';
+  });
+</script>
+
+</body>
+</html>

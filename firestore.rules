@@ -1,0 +1,95 @@
+rules_version = '2';
+
+// ══════════════════════════════════════════════════════════════════════════
+// Reglas de seguridad — Barsa Soacha Academy
+// Roles: admin > coordinator > coach > parent (ver ROLES en firebase-config.js)
+// ══════════════════════════════════════════════════════════════════════════
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function myRole() {
+      return isSignedIn()
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : null;
+    }
+    function isAdmin()       { return myRole() == 'admin'; }
+    function isCoordinator() { return myRole() in ['admin', 'coordinator']; }
+    function isStaff()       { return myRole() in ['admin', 'coordinator', 'coach']; }
+
+    // ── Perfiles de usuario ──────────────────────────────────────────────
+    // Cada usuario puede leer su propio perfil; el staff puede leer todos.
+    // Un usuario puede crear SU PROPIO perfil la primera vez que inicia
+    // sesión (bootstrap del primer administrador). Solo un admin puede
+    // cambiar el rol de alguien después de creado.
+    match /users/{userId} {
+      allow read:   if isSignedIn() && (request.auth.uid == userId || isStaff());
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isAdmin()
+                    || (isSignedIn() && request.auth.uid == userId
+                        && request.resource.data.role == resource.data.role);
+      allow delete: if isAdmin();
+    }
+
+    // ── Catálogos administrativos (alumnos, categorías, entrenadores) ────
+    match /students/{id} {
+      allow read:  if isStaff();
+      allow write: if isCoordinator();
+    }
+    match /categories/{id} {
+      allow read:  if isSignedIn();
+      allow write: if isCoordinator();
+    }
+    match /coaches/{id} {
+      allow read:  if isStaff();
+      allow write: if isCoordinator();
+    }
+    match /parents/{id} {
+      allow read:  if isStaff();
+      allow write: if isCoordinator();
+    }
+
+    // ── Operación diaria ──────────────────────────────────────────────────
+    match /attendance/{id} {
+      allow read:  if isStaff();
+      allow write: if isStaff();
+    }
+    match /payments/{id} {
+      allow read:  if isStaff();
+      allow write: if isCoordinator();
+    }
+    match /tournaments/{id} {
+      allow read:  if isSignedIn();
+      allow write: if isCoordinator();
+    }
+    match /schedules/{id} {
+      allow read:  if isSignedIn();
+      allow write: if isCoordinator();
+    }
+
+    // ── Comunicación ──────────────────────────────────────────────────────
+    match /announcements/{id} {
+      allow read:  if isSignedIn();
+      allow write: if isCoordinator();
+    }
+    match /notifications/{id} {
+      allow read:  if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if isStaff();
+    }
+
+    // ── Reportes y configuración ──────────────────────────────────────────
+    match /reports/{id} {
+      allow read:  if isStaff();
+      allow write: if isCoordinator();
+    }
+    match /settings/{id} {
+      allow read:  if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Por defecto, todo lo demás queda bloqueado.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

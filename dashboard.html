@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Barsa Soacha Academy</title>
+  <link rel="icon" type="image/svg+xml" href="./logo-barsa.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- CDN -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.12.4/sweetalert2.min.css" rel="stylesheet">
+
+  <!-- CSS propios — ESTRUCTURA PLANA -->
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./responsive.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ══════════════════ SIDEBAR ══════════════════ -->
+  <nav id="sidebar" class="sidebar">
+
+    <!-- Marca con logo escudo SVG embebido -->
+    <div class="sidebar-brand">
+      <!-- Logo Barsa Soacha — reemplaza logo-barsa.svg para cambiar el escudo -->
+      <div class="brand-logo" style="background:transparent;width:44px;height:44px;padding:0;box-shadow:none;border-radius:0">
+        <img src="./logo-barsa.svg" alt="Escudo Barsa Soacha Academy" style="width:44px;height:44px">
+      </div>
+      <div class="brand-text">
+        <div class="brand-name">BARSA SOACHA</div>
+        <div class="brand-tagline">Academia de Fútbol</div>
+      </div>
+    </div>
+
+    <!-- Navegación -->
+    <div class="sidebar-nav" role="navigation">
+
+      <span class="nav-section-label">Principal</span>
+      <a href="./dashboard.html" class="nav-link" data-page="dashboard.html">
+        <span class="nav-icon"><i class="fas fa-th-large"></i></span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+
+      <span class="nav-section-label">Academia</span>
+      <a href="#" class="nav-link" data-page="alumnos.html">
+        <span class="nav-icon"><i class="fas fa-users"></i></span>
+        <span class="nav-label">Alumnos</span>
+        <span class="nav-badge" id="badgeStudents">—</span>
+      </a>
+      <a href="#" class="nav-link" data-page="categorias.html">
+        <span class="nav-icon"><i class="fas fa-layer-group"></i></span>
+        <span class="nav-label">Categorías</span>
+      </a>
+      <a href="#" class="nav-link" data-page="entrenadores.html">
+        <span class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></span>
+        <span class="nav-label">Entrenadores</span>
+      </a>
+
+      <span class="nav-section-label">Operaciones</span>
+      <a href="#" class="nav-link" data-page="asistencia.html">
+        <span class="nav-icon"><i class="fas fa-clipboard-check"></i></span>
+        <span class="nav-label">Asistencia</span>
+      </a>
+      <a href="#" class="nav-link" data-page="pagos.html">
+        <span class="nav-icon"><i class="fas fa-credit-card"></i></span>
+        <span class="nav-label">Pagos</span>
+        <span class="nav-badge" id="badgePayments" style="background:#dc3545;color:#fff">—</span>
+      </a>
+      <a href="#" class="nav-link" data-page="torneos.html">
+        <span class="nav-icon"><i class="fas fa-trophy"></i></span>
+        <span class="nav-label">Torneos</span>
+      </a>
+      <a href="#" class="nav-link" data-page="agenda.html">
+        <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
+        <span class="nav-label">Agenda</span>
+      </a>
+
+      <span class="nav-section-label">Comunicación</span>
+      <a href="#" class="nav-link" data-page="comunicados.html">
+        <span class="nav-icon"><i class="fas fa-bullhorn"></i></span>
+        <span class="nav-label">Comunicados</span>
+      </a>
+      <a href="#" class="nav-link" data-page="portal-padres.html">
+        <span class="nav-icon"><i class="fas fa-user-friends"></i></span>
+        <span class="nav-label">Portal Padres</span>
+      </a>
+
+      <span class="nav-section-label">Análisis</span>
+      <a href="#" class="nav-link" data-page="reportes.html">
+        <span class="nav-icon"><i class="fas fa-chart-bar"></i></span>
+        <span class="nav-label">Reportes</span>
+      </a>
+
+      <span class="nav-section-label">Sistema</span>
+      <a href="#" class="nav-link" data-page="configuracion.html">
+        <span class="nav-icon"><i class="fas fa-cog"></i></span>
+        <span class="nav-label">Configuración</span>
+      </a>
+      <a href="#" class="nav-link" id="logoutBtn">
+        <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>
+        <span class="nav-label">Cerrar sesión</span>
+      </a>
+
+    </div>
+
+    <div class="sidebar-footer">
+      <p class="sidebar-version">Barsa Soacha v1.1.0 · Firebase</p>
+    </div>
+
+  </nav>
+
+  <!-- Overlay móvil -->
+  <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+  <!-- ══════════════════ MAIN ══════════════════ -->
+  <div class="main-content" id="mainContent">
+
+    <!-- Navbar superior -->
+    <header class="top-navbar">
+      <button id="sidebarToggle" aria-label="Menú">
+        <i class="fas fa-bars"></i>
+      </button>
+
+      <div class="navbar-search">
+        <div class="search-input-wrap">
+          <i class="fas fa-search"></i>
+          <input type="search" placeholder="Buscar alumno, pago, evento…" id="globalSearch">
+        </div>
+      </div>
+
+      <div class="navbar-actions">
+        <span class="live-clock" id="liveClock">--:--:--</span>
+
+        <button class="nav-action-btn" id="darkModeBtn" aria-label="Cambiar tema">
+          <i class="fas fa-moon" id="themeIcon"></i>
+        </button>
+
+        <button class="nav-action-btn" aria-label="Notificaciones">
+          <i class="fas fa-bell"></i>
+          <span class="notif-dot"></span>
+        </button>
+
+        <div class="navbar-divider"></div>
+
+        <button class="user-menu-btn" id="userMenuBtn">
+          <div class="nav-avatar" id="navAvatar">?</div>
+          <div class="user-info">
+            <div class="user-name" id="navUserName">Cargando…</div>
+            <div class="user-role" id="navUserRole"></div>
+          </div>
+          <i class="fas fa-chevron-down ms-1" style="font-size:10px;color:var(--text-muted)"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Cuerpo del dashboard -->
+    <main class="page-body" id="dashboardPage">
+
+      <!-- Encabezado -->
+      <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+          <h1 class="greeting-text" id="dashGreeting">Bienvenido 👋</h1>
+          <p class="date-text" id="dashDate"></p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn-outline-bara">
+            <i class="fas fa-clipboard-check"></i> Pasar asistencia
+          </button>
+          <button class="btn-primary-bara">
+            <i class="fas fa-user-plus"></i> Nuevo alumno
+          </button>
+        </div>
+      </div>
+
+      <!-- Stat cards (dinámicas) -->
+      <section aria-label="Indicadores">
+        <div id="statsContainer">
+          <div class="skeleton-stat"><div class="sk-icon"></div><div class="sk-text"><div class="sk-line w-50"></div><div class="sk-line w-75"></div></div></div>
+          <div class="skeleton-stat"><div class="sk-icon"></div><div class="sk-text"><div class="sk-line w-50"></div><div class="sk-line w-75"></div></div></div>
+          <div class="skeleton-stat"><div class="sk-icon"></div><div class="sk-text"><div class="sk-line w-50"></div><div class="sk-line w-75"></div></div></div>
+          <div class="skeleton-stat"><div class="sk-icon"></div><div class="sk-text"><div class="sk-line w-50"></div><div class="sk-line w-75"></div></div></div>
+          <div class="skeleton-stat"><div class="sk-icon"></div><div class="sk-text"><div class="sk-line w-50"></div><div class="sk-line w-75"></div></div></div>
+        </div>
+      </section>
+
+      <!-- Gráficas -->
+      <section class="charts-grid mt-0" aria-label="Gráficas">
+
+        <div class="card-bara">
+          <div class="card-header-bara">
+            <span class="card-title-bara"><i class="fas fa-chart-bar"></i> Asistencia últimos 7 días</span>
+          </div>
+          <div class="card-body-bara">
+            <div class="chart-container">
+              <canvas id="chartAttendance"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-bara">
+          <div class="card-header-bara">
+            <span class="card-title-bara"><i class="fas fa-credit-card"></i> Estado de pagos</span>
+          </div>
+          <div class="card-body-bara">
+            <div class="chart-container">
+              <canvas id="chartPayments"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-bara">
+          <div class="card-header-bara">
+            <span class="card-title-bara"><i class="fas fa-users"></i> Alumnos por categoría</span>
+          </div>
+          <div class="card-body-bara">
+            <div class="chart-container">
+              <canvas id="chartCategories"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Widgets inferiores -->
+      <div class="dashboard-grid mt-4">
+
+        <div class="card-bara">
+          <div class="card-header-bara">
+            <span class="card-title-bara"><i class="fas fa-calendar-alt"></i> Próximos eventos</span>
+            <a href="#" style="font-size:12px;color:var(--color-primary);font-weight:600">Ver agenda →</a>
+          </div>
+          <div class="card-body-bara">
+            <div id="upcomingEvents">
+              <div class="skeleton-row"><div class="sk-circle"></div><div class="sk-text"><div class="sk-line w-60"></div><div class="sk-line w-40"></div></div></div>
+              <div class="skeleton-row" style="margin-top:12px"><div class="sk-circle"></div><div class="sk-text"><div class="sk-line w-75"></div><div class="sk-line w-50"></div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex flex-column gap-4">
+
+          <div class="card-bara">
+            <div class="card-header-bara">
+              <span class="card-title-bara"><i class="fas fa-bullhorn"></i> Comunicados recientes</span>
+            </div>
+            <div class="card-body-bara">
+              <div id="recentAnnouncements">
+                <div class="skeleton-row"><div class="sk-circle"></div><div class="sk-text"><div class="sk-line w-100"></div><div class="sk-line w-50"></div></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-bara">
+            <div class="card-header-bara">
+              <span class="card-title-bara"><i class="fas fa-bolt"></i> Acceso rápido</span>
+            </div>
+            <div class="card-body-bara">
+              <div class="d-grid gap-2">
+                <button class="btn-outline-bara w-100 justify-content-start" style="padding:10px 14px">
+                  <i class="fas fa-user-plus"></i> Registrar alumno
+                </button>
+                <button class="btn-outline-bara w-100 justify-content-start" style="padding:10px 14px">
+                  <i class="fas fa-clipboard-check"></i> Pasar asistencia
+                </button>
+                <button class="btn-outline-bara w-100 justify-content-start" style="padding:10px 14px">
+                  <i class="fas fa-dollar-sign"></i> Registrar pago
+                </button>
+                <button class="btn-outline-bara w-100 justify-content-start" style="padding:10px 14px">
+                  <i class="fas fa-bullhorn"></i> Nuevo comunicado
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Loader global -->
+<div id="globalLoader" role="status" aria-live="polite">
+  <div class="loader-ball"></div>
+  <p id="loaderMessage">Cargando panel…</p>
+</div>
+
+<!-- Scripts CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.12.4/sweetalert2.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+
+<!-- Módulo principal — RUTA PLANA -->
+<script type="module">
+  import { initDashboard } from './dashboard.js';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initDashboard().catch(err => {
+      console.error('[Dashboard] Error fatal:', err);
+      if (window.Swal) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error de conexión',
+          text: 'No se pudo conectar con Firebase. Verifica tu conexión e intenta de nuevo.',
+          confirmButtonColor: '#8B0000'
+        });
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
