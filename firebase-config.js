@@ -24,7 +24,7 @@ import { getStorage }      from 'https://www.gstatic.com/firebasejs/11.10.0/fire
 
 // ─── ⚠️ REEMPLAZA ESTOS VALORES CON LOS DE TU PROYECTO FIREBASE ─────────────
 const FIREBASE_CONFIG = {
-apiKey: "AIzaSyAEvI3p3jP6Mgc4iCka1Wd_1FdhF9Bx7ZQ",
+ apiKey: "AIzaSyAEvI3p3jP6Mgc4iCka1Wd_1FdhF9Bx7ZQ",
   authDomain: "barsa-soacha.firebaseapp.com",
   projectId: "barsa-soacha",
   storageBucket: "barsa-soacha.firebasestorage.app",
