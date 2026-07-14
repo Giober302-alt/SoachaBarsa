@@ -36,30 +36,35 @@ export const seedDemoData = async () => {
   }
   log.push(`Entrenadores creados: ${coachNames.join(', ')}`);
 
-  // Alumnos
+  // Alumnos — el primero queda vinculado a padre.demo@barsa.co para poder
+  // probar el Portal de Padres de inmediato.
   const studentNames = [
     'Santiago Gómez', 'Valentina Ríos', 'Mateo Rojas',
     'Isabella Cortés', 'Samuel Pérez', 'María José Duarte'
   ];
+  const studentIds = [];
   for (let i = 0; i < studentNames.length; i++) {
-    await addDoc(collection(db, COLLECTIONS.STUDENTS), {
+    const ref = await addDoc(collection(db, COLLECTIONS.STUDENTS), {
       displayName: studentNames[i],
       categoryId:  catIds[i % catIds.length],
       birthDate:   Timestamp.fromDate(new Date(2013 + (i % 5), i % 12, (i * 3) % 28 + 1)),
+      parentEmail: i === 0 ? 'padre.demo@barsa.co' : null,
       active:      true,
       createdAt:   serverTimestamp()
     });
+    studentIds.push(ref.id);
   }
-  log.push(`Alumnos creados: ${studentNames.length}`);
+  log.push(`Alumnos creados: ${studentNames.length} (el primero vinculado a padre.demo@barsa.co)`);
 
   // Asistencia de hoy (para las estadísticas del dashboard)
   const todayStr = new Date().toISOString().split('T')[0];
-  const studentsSnapNames = studentNames.length;
-  for (let i = 0; i < studentsSnapNames; i++) {
-    await addDoc(collection(db, COLLECTIONS.ATTENDANCE), {
+  for (let i = 0; i < studentIds.length; i++) {
+    const status = i < 4 ? 'arrived' : (i === 4 ? 'late' : 'absent');
+    await setDoc(doc(db, COLLECTIONS.ATTENDANCE, `${todayStr}_${studentIds[i]}`), {
       date: todayStr,
+      studentId: studentIds[i],
       studentName: studentNames[i],
-      status: i < 4 ? 'arrived' : (i === 4 ? 'late' : 'absent'),
+      status,
       createdAt: serverTimestamp()
     });
   }
@@ -69,6 +74,7 @@ export const seedDemoData = async () => {
   const payStatuses = ['paid', 'paid', 'pending', 'pending', 'overdue'];
   for (let i = 0; i < payStatuses.length; i++) {
     await addDoc(collection(db, COLLECTIONS.PAYMENTS), {
+      studentId: studentIds[i % studentIds.length],
       studentName: studentNames[i % studentNames.length],
       amount: 80000,
       status: payStatuses[i],

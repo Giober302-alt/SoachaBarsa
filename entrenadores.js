@@ -13,7 +13,7 @@ let coaches = [];
 
 const init = async () => {
   showLoader('Cargando entrenadores…');
-  const profile = await requireAuth();
+  const profile = await requireAuth('coordinator');
   if (!profile) return;
   initShell();
 

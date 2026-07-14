@@ -14,7 +14,7 @@ let unsub = null;
 
 const init = async () => {
   showLoader('Cargando categorías…');
-  const profile = await requireAuth();
+  const profile = await requireAuth('coordinator');
   if (!profile) return;
   initShell();
 

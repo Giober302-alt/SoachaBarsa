@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel del entrenador — Barsa Soacha Academy</title>
+  <link rel="icon" type="image/svg+xml" href="./logo-barsa.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.12.4/sweetalert2.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./responsive.css">
+  <style>
+    body { background: var(--bg-app); }
+    .coach-wrap { max-width: 880px; margin: 0 auto; padding: 24px 20px 60px; }
+    .coach-header { display:flex; align-items:center; justify-content:space-between; padding:16px 0 24px; gap:12px; flex-wrap:wrap; }
+    .coach-brand { display:flex; align-items:center; gap:10px; }
+    .coach-brand img { width:36px; height:36px; }
+    .coach-brand-name { font-family:var(--font-display); font-size:18px; letter-spacing:1px; color:var(--text-primary); }
+    .coach-section-title { font-size:15px; font-weight:700; margin:28px 0 12px; color:var(--text-primary); }
+  </style>
+</head>
+<body>
+
+<div class="coach-wrap">
+  <div class="coach-header">
+    <div class="coach-brand">
+      <img src="./logo-barsa.svg" alt="Barsa Soacha">
+      <div>
+        <div class="coach-brand-name">BARSA SOACHA</div>
+        <p style="font-size:11px;color:var(--text-muted)">Panel del entrenador</p>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <a href="./asistencia.html" class="btn-primary-bara"><i class="fas fa-clipboard-check"></i> Pasar asistencia</a>
+      <button class="nav-action-btn" id="logoutBtn" aria-label="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </div>
+
+  <h1 class="greeting-text" id="coachGreeting">Bienvenido 👋</h1>
+
+  <p class="coach-section-title"><i class="fas fa-calendar-alt"></i> Próximos eventos</p>
+  <div id="coachAgenda"><div class="skeleton-card"></div></div>
+
+  <p class="coach-section-title"><i class="fas fa-users"></i> Alumnos activos</p>
+  <div id="coachStudents"><div class="skeleton-card"></div></div>
+</div>
+
+<div id="globalLoader" role="status" aria-live="polite">
+  <div class="loader-ball"></div>
+  <p id="loaderMessage">Cargando…</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.12.4/sweetalert2.all.min.js"></script>
+<!-- coach-panel.js llama a initShell(), que ya conecta #logoutBtn con confirmación -->
+<script type="module">
+  import './coach-panel.js';
+</script>
+
+</body>
+</html>

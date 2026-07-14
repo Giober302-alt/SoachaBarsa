@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Categorías — Barsa Soacha Academy</title>
+  <title>Asistencia — Barsa Soacha Academy</title>
   <link rel="icon" type="image/svg+xml" href="./logo-barsa.svg">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -164,19 +164,27 @@
     </header>
 
     <!-- Cuerpo del dashboard -->
-    <main class="page-body" id="categoriasPage">
+    <main class="page-body" id="asistenciaPage">
 
       <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
-        <div>
-          <h1 class="greeting-text">Categorías</h1>
-          <p class="date-text">Equipos por rango de edad</p>
-        </div>
-        <button class="btn-primary-bara" id="btnNewCategory"><i class="fas fa-plus"></i> Nueva categoría</button>
+        <div><h1 class="greeting-text">Asistencia</h1><p class="date-text">Pasa lista por categoría y fecha</p></div>
       </div>
-      <section aria-label="Categorías" style="display:flex;flex-direction:column;gap:12px">
-        <div id="categoriesContainer">
-          <div class="skeleton-card"></div>
+      <div class="card-bara" style="padding:18px;margin-bottom:16px">
+        <div class="d-flex gap-3 flex-wrap align-items-end">
+          <div>
+            <label class="form-label-bara">Categoría</label>
+            <select id="categorySelect" class="form-control-bara" style="min-width:200px"></select>
+          </div>
+          <div>
+            <label class="form-label-bara">Fecha</label>
+            <input id="dateInput" type="date" class="form-control-bara">
+          </div>
+          <button class="btn-outline-bara" id="loadBtn"><i class="fas fa-rotate"></i> Cargar</button>
+          <button class="btn-primary-bara" id="saveBtn" style="margin-left:auto"><i class="fas fa-check"></i> Guardar asistencia</button>
         </div>
+      </div>
+      <section aria-label="Lista de alumnos">
+        <div id="rosterContainer"><div class="skeleton-card"></div></div>
       </section>
 </main>
   </div>
@@ -194,7 +202,7 @@
 
 <!-- Módulo principal — RUTA PLANA -->
 <script type="module">
-  import './categorias.js';
+  import './asistencia.js';
 </script>
 
 </body>

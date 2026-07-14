@@ -158,6 +158,40 @@ no crees esas cuentas demo y los botones no harán nada útil.
 
 ---
 
+## Paso 9 — Módulos de gestión y accesos por rol
+
+Ya incluidos y funcionando (crean/editan/borran directo en Firestore):
+
+- **Alumnos** (`alumnos.html`) — agrega el correo del padre en el campo
+  "Correo del padre/acudiente" para que ese alumno aparezca en su Portal de Padres.
+- **Categorías** (`categorias.html`), **Entrenadores** (`entrenadores.html`).
+- **Agenda** (`agenda.html`) — crea entrenamientos, partidos y reuniones.
+- **Asistencia** (`asistencia.html`) — elige categoría + fecha y pasa lista.
+- **Pagos** (`pagos.html`) — registra pagos por alumno y su estado.
+- **Comunicados** (`comunicados.html`) — mensajes que ven los padres en su portal.
+- **Usuarios** (`usuarios.html`, solo Administrador) — crea cuentas de
+  coordinador/entrenador/padre **sin salir de la app y sin tocar Firebase
+  Console**: escribe nombre, correo y rol; el sistema crea la cuenta y le
+  envía un correo a esa persona para que elija su propia contraseña.
+
+### Qué ve cada rol al iniciar sesión
+- **Admin / Coordinador** → `dashboard.html` completo (todos los módulos).
+- **Entrenador** → `coach-panel.html`: su agenda, el listado de alumnos y
+  acceso directo a pasar asistencia. No ve pagos ni puede editar alumnos.
+- **Padre de familia** → `portal-padres.html`: solo la información de su(s)
+  hijo(s) vinculados por correo — asistencia, pagos y comunicados. Si no ve a
+  su hijo, revisa que el correo esté bien escrito en el perfil del alumno.
+
+### Nota de seguridad sobre `usuarios.html`
+Cualquier usuario autenticado puede, técnicamente, crear su propio documento
+de perfil la primera vez (necesario para que el primer administrador pueda
+arrancar el sistema). Una vez tengas tu cuenta admin funcionando, esto no
+representa un riesgo práctico porque nadie puede registrarse solo — las
+cuentas de Firebase Authentication solo las crea un administrador desde
+`usuarios.html`. Si quieres cerrar por completo esa puerta de entrada,
+dile a un desarrollador que reemplace esa regla por una Cloud Function
+con permisos de administrador (no es necesario para operar con normalidad).
+
 ### Resumen de costos
 Con el plan gratuito (Spark) de Firebase tienes, por mes: 50,000 lecturas y
 20,000 escrituras diarias en Firestore, 10 GB de transferencia en Hosting y

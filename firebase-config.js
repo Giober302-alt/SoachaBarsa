@@ -36,6 +36,10 @@ const FIREBASE_CONFIG = {
 // ─── Inicialización ────────────────────────────────────────────────────────────
 const firebaseApp = initializeApp(FIREBASE_CONFIG);
 
+// Se exporta para poder crear una app secundaria (ver usuarios.js) al crear
+// cuentas nuevas sin cerrar la sesión del administrador actual.
+export { FIREBASE_CONFIG };
+
 export const auth    = getAuth(firebaseApp);
 export const db      = getFirestore(firebaseApp);
 export const storage = getStorage(firebaseApp);

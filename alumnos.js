@@ -15,7 +15,7 @@ let categories = [];
 
 const init = async () => {
   showLoader('Cargando alumnos…');
-  const profile = await requireAuth();
+  const profile = await requireAuth('coordinator');
   if (!profile) return;
   initShell();
 
@@ -96,6 +96,8 @@ const openForm = (existing = null) => {
         </select>
         <label class="form-label-bara">Fecha de nacimiento</label>
         <input id="swalBirth" type="date" class="form-control-bara swal2-input" style="margin:0 0 12px" value="${birthStr}">
+        <label class="form-label-bara">Correo del padre/acudiente <span style="font-weight:400;color:var(--text-muted)">(para el Portal de Padres)</span></label>
+        <input id="swalParentEmail" type="email" class="form-control-bara swal2-input" style="margin:0 0 12px" placeholder="padre@correo.com" value="${existing ? escapeHtml(existing.parentEmail || '') : ''}">
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary)">
           <input id="swalActive" type="checkbox" ${existing?.active === false ? '' : 'checked'}> Activo
         </label>
@@ -113,6 +115,7 @@ const openForm = (existing = null) => {
         displayName,
         categoryId: document.getElementById('swalCategory').value || null,
         birthDate: birthVal ? Timestamp.fromDate(new Date(birthVal + 'T00:00:00')) : null,
+        parentEmail: document.getElementById('swalParentEmail').value.trim().toLowerCase() || null,
         active: document.getElementById('swalActive').checked
       };
     }

@@ -33,6 +33,10 @@ export const initDashboard = async () => {
   const profile = await requireAuth();
   if (!profile) return;
 
+  // El dashboard completo es solo para admin/coordinador.
+  if (profile.role === 'parent') { window.location.href = './portal-padres.html'; return; }
+  if (profile.role === 'coach')  { window.location.href = './coach-panel.html';   return; }
+
   initShell();
   renderGreeting(profile);
   showSkeleton('statsContainer', 5, 'stat');

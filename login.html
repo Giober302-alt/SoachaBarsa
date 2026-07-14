@@ -139,11 +139,17 @@
   // Aplicar tema guardado
   applyTheme(localStorage.getItem('barsa_theme') || 'light');
 
-  // Si ya hay sesión → ir al dashboard
+  // Si ya hay sesión → ir a la vista que corresponda según el rol
   const unsub = onSessionChange((user, profile) => {
     unsub();
-    if (user && profile) window.location.href = './dashboard.html';
+    if (user && profile) window.location.href = destinationForRole(profile.role);
   });
+
+  function destinationForRole(role) {
+    if (role === 'parent') return './portal-padres.html';
+    if (role === 'coach')  return './coach-panel.html';
+    return './dashboard.html';
+  }
 
   // Animar tarjeta al cargar
   const card = document.getElementById('loginCard');
@@ -185,7 +191,7 @@
       Swal.fire({ toast:true, position:'top-end', icon:'success',
         title:`¡Bienvenido, ${result.profile?.displayName?.split(' ')[0] || ''}!`,
         showConfirmButton:false, timer:1200 });
-      setTimeout(() => { window.location.href = './dashboard.html'; }, 900);
+      setTimeout(() => { window.location.href = destinationForRole(result.profile?.role); }, 900);
     } else {
       setLoading(false);
       Swal.fire({ toast:true, position:'top-end', icon:'error',

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Categorías — Barsa Soacha Academy</title>
+  <title>Agenda — Barsa Soacha Academy</title>
   <link rel="icon" type="image/svg+xml" href="./logo-barsa.svg">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -164,19 +164,14 @@
     </header>
 
     <!-- Cuerpo del dashboard -->
-    <main class="page-body" id="categoriasPage">
+    <main class="page-body" id="agendaPage">
 
       <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
-        <div>
-          <h1 class="greeting-text">Categorías</h1>
-          <p class="date-text">Equipos por rango de edad</p>
-        </div>
-        <button class="btn-primary-bara" id="btnNewCategory"><i class="fas fa-plus"></i> Nueva categoría</button>
+        <div><h1 class="greeting-text">Agenda</h1><p class="date-text">Entrenamientos, partidos y reuniones</p></div>
+        <button class="btn-primary-bara" id="btnNewEvent"><i class="fas fa-plus"></i> Nuevo evento</button>
       </div>
-      <section aria-label="Categorías" style="display:flex;flex-direction:column;gap:12px">
-        <div id="categoriesContainer">
-          <div class="skeleton-card"></div>
-        </div>
+      <section aria-label="Eventos" style="display:flex;flex-direction:column;gap:12px">
+        <div id="eventsContainer"><div class="skeleton-card"></div></div>
       </section>
 </main>
   </div>
@@ -194,7 +189,7 @@
 
 <!-- Módulo principal — RUTA PLANA -->
 <script type="module">
-  import './categorias.js';
+  import './agenda.js';
 </script>
 
 </body>
