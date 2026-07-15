@@ -209,3 +209,88 @@
     transition-duration:  0.01ms !important;
   }
 }
+
+/* ═════════════════════════════════════════════════════════════════════
+   MOBILE-FIRST: refuerzos globales (formularios SweetAlert2, tablas,
+   objetivos táctiles, tipografía) — aplica en TODA la plataforma.
+   ═════════════════════════════════════════════════════════════════════ */
+
+/* Nunca permitir scroll horizontal de página completa */
+html, body { max-width: 100%; overflow-x: hidden; }
+img, svg, canvas, video { max-width: 100%; height: auto; }
+
+/* ── Ventanas modales (SweetAlert2) — usadas en toda la app para
+   crear/editar alumnos, torneos, pagos, agenda, etc. ────────────────── */
+.swal2-popup {
+  width: 94vw !important;
+  max-width: 480px !important;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+}
+.swal2-html-container {
+  max-height: 70vh !important;
+  overflow-y: auto !important;
+  margin: 1em 0 0 !important;
+}
+.swal2-input, .swal2-textarea, .swal2-select { width: 100% !important; }
+
+/* Cualquier fila de 2 columnas dentro de un modal (fecha+hora,
+   sede+cancha, etc.) se apila en pantallas angostas. */
+@media (max-width: 480px) {
+  .swal2-html-container div[style*="display:flex"] {
+    flex-wrap: wrap !important;
+  }
+  .swal2-html-container div[style*="display:flex"] > div[style*="flex:1"] {
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+/* ── Tablas: siempre dentro de un contenedor con scroll propio,
+   nunca desbordan la página ─────────────────────────────────────────── */
+.card-body-bara,
+[id$="Container"] > .card-bara .card-body-bara,
+[style*="overflow-x:auto"] {
+  max-width: 100%;
+}
+table { border-collapse: collapse; }
+
+/* ── Objetivos táctiles ≥44px en móvil ───────────────────────────────── */
+@media (max-width: 767.98px) {
+  .btn-primary-bara, .btn-outline-bara, .btn-login {
+    padding: 11px 18px;
+    min-height: 44px;
+  }
+  .nav-action-btn, #sidebarToggle {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .dtab-btn { padding: 10px 16px; min-height: 40px; }
+  input[type="checkbox"], input[type="radio"] { width: 18px; height: 18px; }
+
+  /* Encabezados de página: botones/acciones a ancho completo y apiladas */
+  .page-header { flex-direction: column; align-items: stretch !important; }
+  .page-header > div:first-child { margin-bottom: 4px; }
+  .page-header .btn-primary-bara,
+  .page-header .btn-outline-bara { width: 100%; justify-content: center; }
+
+  /* Tarjetas y widgets: menos padding, texto más compacto pero legible */
+  .card-bara { border-radius: 12px; }
+  .greeting-text { font-size: 18px; }
+}
+
+/* ── Móviles muy angostos (≤380px): última red de seguridad ──────────── */
+@media (max-width: 380px) {
+  .page-body { padding: 10px; padding-top: calc(var(--navbar-height) + 10px); }
+  .card-body-bara { padding: 12px; }
+  .btn-primary-bara, .btn-outline-bara { font-size: 12.5px; padding: 10px 14px; }
+}
+
+/* ── Tablets en vertical: 2 columnas donde antes había 3-4 ───────────── */
+@media (min-width: 576px) and (max-width: 991.98px) {
+  #reportStats,
+  [style*="grid-template-columns:repeat(auto-fit,minmax(180px"],
+  [style*="grid-template-columns:repeat(auto-fill,minmax(180px"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
