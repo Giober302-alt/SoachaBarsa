@@ -315,7 +315,7 @@
         Swal.fire({
           icon: 'error',
           title: 'Error de conexión',
-          text: 'No se pudo conectar con Firebase. Verifica tu conexión e intenta de nuevo.',
+          text: 'No se pudo conectar con Firebase (' + (err.code || err.message || 'error desconocido') + '). Verifica que firestore.rules esté publicado y que tu conexión funcione.',
           confirmButtonColor: '#8B0000'
         });
       }

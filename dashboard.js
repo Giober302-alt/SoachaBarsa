@@ -48,7 +48,8 @@ export const initDashboard = async () => {
     subscribeAnnouncements()
   );
 
-  // Gráficas (carga única)
+  // Gráficas (carga única) — cada una se protege por separado para que un
+  // error de permisos o de índice en una no tumbe el resto del panel.
   await loadCharts();
   hideLoader();
   startClock();
@@ -179,7 +180,10 @@ const scheduleChartsRefresh = () => {
 };
 
 const loadCharts = async () => {
-  await Promise.all([renderAttendanceChart(), renderPaymentsChart(), renderCategoriesChart()]);
+  const results = await Promise.allSettled([renderAttendanceChart(), renderPaymentsChart(), renderCategoriesChart()]);
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') console.error(`[Dashboard] Gráfica ${i} falló:`, r.reason);
+  });
 };
 
 const renderAttendanceChart = async () => {
@@ -190,17 +194,19 @@ const renderAttendanceChart = async () => {
   const labels = [], data = [];
   const dias = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
-    labels.push(dias[d.getDay()]);
-    const snap = await getDocs(query(
-      collection(db, COLLECTIONS.ATTENDANCE),
-      where('date','==', dateStr),
-      where('status','in',['arrived','late'])
-    ));
-    data.push(snap.size);
-  }
+  try {
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      labels.push(dias[d.getDay()]);
+      const snap = await getDocs(query(
+        collection(db, COLLECTIONS.ATTENDANCE),
+        where('date','==', dateStr),
+        where('status','in',['arrived','late'])
+      ));
+      data.push(snap.size);
+    }
+  } catch (err) { console.error('[Dashboard] renderAttendanceChart:', err); return; }
 
   chartAttendance = new Chart(canvas, {
     type: 'bar',
@@ -219,8 +225,10 @@ const renderPaymentsChart = async () => {
   if (chartPayments) { chartPayments.destroy(); chartPayments = null; }
 
   const counts = { paid:0, pending:0, overdue:0 };
-  const snap   = await getDocs(collection(db, COLLECTIONS.PAYMENTS));
-  snap.forEach(d => { const s = d.data().status; if (s in counts) counts[s]++; });
+  try {
+    const snap = await getDocs(collection(db, COLLECTIONS.PAYMENTS));
+    snap.forEach(d => { const s = d.data().status; if (s in counts) counts[s]++; });
+  } catch (err) { console.error('[Dashboard] renderPaymentsChart:', err); return; }
 
   chartPayments = new Chart(canvas, {
     type: 'doughnut',
@@ -246,13 +254,15 @@ const renderCategoriesChart = async () => {
   if (!canvas || !window.Chart) return;
   if (chartCategories) { chartCategories.destroy(); chartCategories = null; }
 
-  const [catsSnap, studsSnap] = await Promise.all([
-    getDocs(collection(db, COLLECTIONS.CATEGORIES)),
-    getDocs(query(collection(db, COLLECTIONS.STUDENTS), where('active','==',true)))
-  ]);
-
-  const cats   = catsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-  const studs  = studsSnap.docs.map(d => d.data());
+  let cats = [], studs = [];
+  try {
+    const [catsSnap, studsSnap] = await Promise.all([
+      getDocs(collection(db, COLLECTIONS.CATEGORIES)),
+      getDocs(query(collection(db, COLLECTIONS.STUDENTS), where('active','==',true)))
+    ]);
+    cats  = catsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    studs = studsSnap.docs.map(d => d.data());
+  } catch (err) { console.error('[Dashboard] renderCategoriesChart:', err); return; }
   const labels = cats.map(c => c.name);
   const inStudentCats = (s, catId) => (s.categoryIds && s.categoryIds.length) ? s.categoryIds.includes(catId) : s.categoryId === catId;
   const data   = cats.map(c => studs.filter(s => inStudentCats(s, c.id)).length);
