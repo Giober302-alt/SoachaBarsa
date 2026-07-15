@@ -23,7 +23,7 @@ import { getFirestore }    from 'https://www.gstatic.com/firebasejs/11.10.0/fire
 import { getStorage }      from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-storage.js';
 
 // ─── ⚠️ REEMPLAZA ESTOS VALORES CON LOS DE TU PROYECTO FIREBASE ─────────────
-const FIREBASE_CONFIG = {
+const FIREBASECONFIG = {
   apiKey: "AIzaSyAEvI3p3jP6Mgc4iCka1Wd_1FdhF9Bx7ZQ",
   authDomain: "barsa-soacha.firebaseapp.com",
   projectId: "barsa-soacha",
@@ -34,7 +34,7 @@ const FIREBASE_CONFIG = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─── Inicialización ────────────────────────────────────────────────────────────
-const firebaseApp = initializeApp(FIREBASE_CONFIG);
+const firebaseApp = initializeApp(FIREBASECONFIG);
 
 // Se exporta para poder crear una app secundaria (ver usuarios.js) al crear
 // cuentas nuevas sin cerrar la sesión del administrador actual.
