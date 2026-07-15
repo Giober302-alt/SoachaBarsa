@@ -95,7 +95,7 @@ const openForm = () => {
     showCancelButton: true,
     confirmButtonText: 'Crear cuenta',
     cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#00C853',
+    confirmButtonColor: '#8B0000',
     focusConfirm: false,
     preConfirm: () => {
       const displayName = document.getElementById('swalName').value.trim();
@@ -150,7 +150,7 @@ const openEdit = (existing) => {
     showCancelButton: true,
     confirmButtonText: 'Guardar',
     cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#00C853',
+    confirmButtonColor: '#8B0000',
     focusConfirm: false,
     preConfirm: () => ({
       displayName: document.getElementById('swalName').value.trim(),

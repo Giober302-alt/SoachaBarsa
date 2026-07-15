@@ -132,25 +132,6 @@
         </button>
       </form>
 
-      <!-- Acceso rápido demo -->
-      <div class="demo-section">
-        <p class="demo-label">Acceso rápido — Demo</p>
-        <div class="demo-grid">
-          <button type="button" class="demo-btn" id="demoAdmin"
-            data-email="admin@barsa.co" data-password="Admin2025*">
-            <i class="fas fa-user-shield"></i> Administrador
-          </button>
-          <button type="button" class="demo-btn" id="demoCoach"
-            data-email="coach@barsa.co" data-password="Coach123*">
-            <i class="fas fa-whistle"></i> Entrenador
-          </button>
-          <button type="button" class="demo-btn" id="demoParent"
-            data-email="padre@barsa.co" data-password="Padre123*">
-            <i class="fas fa-user-friends"></i> Padre
-          </button>
-        </div>
-      </div>
-
       <footer style="text-align:center;margin-top:24px">
         <p style="font-size:11px;color:var(--text-muted)">
           Barsa Soacha Academy &copy; 2025 · v1.1.0 · Licencia MIT
@@ -264,26 +245,15 @@
     }
   });
 
-  // Botones demo
-  document.querySelectorAll('.demo-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      emailIn.value = btn.dataset.email;
-      pwdIn.value   = btn.dataset.password;
-      form.dispatchEvent(new Event('submit'));
-    });
-  });
-
   // ── Alternar entre iniciar sesión y registrarse (padres) ──
   const loginForm    = form;
   const registerForm = document.getElementById('registerForm');
   const formTitle    = document.getElementById('formTitle');
   const formSubtitle = document.getElementById('formSubtitle');
-  const demoSection  = document.querySelector('.demo-section');
 
   document.getElementById('toggleToRegister')?.addEventListener('click', () => {
     loginForm.style.display = 'none';
     registerForm.style.display = 'block';
-    demoSection.style.display = 'none';
     document.getElementById('toggleToRegisterWrap').style.display = 'none';
     document.getElementById('toggleToLoginWrap').style.display = 'inline';
     formTitle.textContent = 'Crea tu cuenta de padre';
@@ -293,7 +263,6 @@
   document.getElementById('toggleToLogin')?.addEventListener('click', () => {
     registerForm.style.display = 'none';
     loginForm.style.display = 'block';
-    demoSection.style.display = 'block';
     document.getElementById('toggleToLoginWrap').style.display = 'none';
     document.getElementById('toggleToRegisterWrap').style.display = 'inline';
     formTitle.textContent = 'Bienvenido';
