@@ -161,7 +161,7 @@ const openGeneralForm = () => {
           <input id="swalActive" type="checkbox" ${student.active === false ? '' : 'checked'}> Activo
         </label>
       </div>`,
-    showCancelButton: true, confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', confirmButtonColor: '#8B0000',
+    showCancelButton: true, confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', confirmButtonColor: '#00C853',
     focusConfirm: false,
     preConfirm: () => ({
       documentType: document.getElementById('swalDocType').value,
@@ -228,7 +228,7 @@ const openMedicalForm = () => {
         <label class="form-label-bara">Observaciones</label>
         <textarea id="mNotes" class="form-control-bara swal2-textarea" style="margin:0">${escapeHtml(m.notes || '')}</textarea>
       </div>`,
-    showCancelButton: true, confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', confirmButtonColor: '#8B0000',
+    showCancelButton: true, confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', confirmButtonColor: '#00C853',
     focusConfirm: false,
     preConfirm: () => ({
       medical: {
@@ -293,7 +293,7 @@ const openContactForm = () => {
         <label class="form-label-bara">Personas autorizadas para recoger al niño(a)</label>
         <textarea id="cPickup" class="form-control-bara swal2-textarea" style="margin:0">${escapeHtml(c.authorizedPickup || '')}</textarea>
       </div>`,
-    showCancelButton: true, confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', confirmButtonColor: '#8B0000',
+    showCancelButton: true, confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', confirmButtonColor: '#00C853',
     focusConfirm: false,
     preConfirm: () => ({
       contact: {
@@ -550,7 +550,7 @@ const openPaymentForm = () => {
           ${Object.entries(PAY_STATUS_LABEL).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}
         </select>
       </div>`,
-    showCancelButton: true, confirmButtonText: 'Crear', cancelButtonText: 'Cancelar', confirmButtonColor: '#8B0000',
+    showCancelButton: true, confirmButtonText: 'Crear', cancelButtonText: 'Cancelar', confirmButtonColor: '#00C853',
     focusConfirm: false,
     preConfirm: () => {
       const dueVal = document.getElementById('payDue').value;

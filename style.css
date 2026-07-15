@@ -21,34 +21,34 @@
    1. TOKENS — Variables CSS del sistema de diseño
    ═══════════════════════════════════════════════════════════════════════════ */
 :root {
-  /* Paleta principal */
-  --color-primary:       #8B0000;   /* Granate profundo */
-  --color-primary-dark:  #6B0000;
-  --color-primary-light: #B22222;
-  --color-primary-10:    rgba(139,0,0,.10);
-  --color-primary-20:    rgba(139,0,0,.20);
+  /* Paleta principal — Azul oscuro + Verde */
+  --color-primary:       #00C853;   /* Verde — acento principal */
+  --color-primary-dark:  #00A344;
+  --color-primary-light: #33D375;
+  --color-primary-10:    rgba(0,200,83,.10);
+  --color-primary-20:    rgba(0,200,83,.20);
 
-  --color-navy:          #0D1B3E;   /* Azul noche (sidebar) */
-  --color-navy-mid:      #1A2F5E;   /* Azul medio */
-  --color-navy-light:    #243a6e;
+  --color-navy:          #0D1B2A;   /* Azul oscuro (sidebar) */
+  --color-navy-mid:      #16293D;   /* Azul medio */
+  --color-navy-light:    #223850;
 
-  --color-gold:          #F0C040;   /* Dorado — acento energético */
-  --color-gold-dark:     #C8961A;
-  --color-gold-10:       rgba(240,192,64,.10);
+  --color-gold:          #00E676;   /* Verde brillante — acento energético */
+  --color-gold-dark:     #00C853;
+  --color-gold-10:       rgba(0,230,118,.10);
 
   /* Neutros (modo claro) */
-  --bg-app:              #F0F2F5;
+  --bg-app:              #F5F7FA;
   --bg-surface:          #FFFFFF;
-  --bg-surface-2:        #F8FAFC;
-  --bg-sidebar:          #0D1B3E;
-  --bg-sidebar-hover:    rgba(240,192,64,.08);
-  --bg-sidebar-active:   rgba(240,192,64,.15);
+  --bg-surface-2:        #F5F7FA;
+  --bg-sidebar:          #0D1B2A;
+  --bg-sidebar-hover:    rgba(0,230,118,.08);
+  --bg-sidebar-active:   rgba(0,230,118,.15);
 
-  --text-primary:        #0F172A;
+  --text-primary:        #0D1B2A;
   --text-secondary:      #475569;
   --text-muted:          #94A3B8;
   --text-sidebar:        rgba(255,255,255,.75);
-  --text-sidebar-active: #F0C040;
+  --text-sidebar-active: #00E676;
 
   --border-color:        #E2E8F0;
   --border-strong:       #CBD5E1;
@@ -58,7 +58,7 @@
   --shadow-sm:   0 2px 8px rgba(0,0,0,.08);
   --shadow-md:   0 4px 16px rgba(0,0,0,.10);
   --shadow-lg:   0 8px 32px rgba(0,0,0,.12);
-  --shadow-sidebar: 4px 0 24px rgba(13,27,62,.25);
+  --shadow-sidebar: 4px 0 24px rgba(13,27,42,.25);
 
   /* Geometría */
   --radius-sm:   6px;
@@ -190,14 +190,14 @@ img { max-width: 100%; display: block; }
   letter-spacing: 1px;
   position:    relative;
   overflow:    hidden;
-  box-shadow:  0 2px 8px rgba(139,0,0,.4);
+  box-shadow:  0 2px 8px rgba(0,200,83,.4);
 }
 
 .brand-logo::after {
   content:    '';
   position:   absolute;
   inset:      0;
-  background: linear-gradient(135deg, rgba(240,192,64,.2) 0%, transparent 60%);
+  background: linear-gradient(135deg, rgba(0,230,118,.2) 0%, transparent 60%);
 }
 
 .brand-text {
@@ -834,7 +834,7 @@ img { max-width: 100%; display: block; }
 }
 
 .type-entrenamiento, .type-training { background: #19875420; color: var(--color-success); }
-.type-partido, .type-match          { background: #8B000020; color: var(--color-primary); }
+.type-partido, .type-match          { background: #00C85320; color: var(--color-primary); }
 .type-reunión, .type-meeting        { background: #0dcaf020; color: #087990; }
 
 /* Comunicados */
@@ -891,8 +891,8 @@ img { max-width: 100%; display: block; }
   position:       absolute;
   inset:          0;
   background:
-    linear-gradient(180deg, rgba(13,27,62,0) 0%, rgba(13,27,62,.8) 100%),
-    radial-gradient(ellipse 120% 80% at 50% 50%, rgba(139,0,0,.15) 0%, transparent 70%);
+    linear-gradient(180deg, rgba(13,27,42,0) 0%, rgba(13,27,42,.8) 100%),
+    radial-gradient(ellipse 120% 80% at 50% 50%, rgba(0,200,83,.15) 0%, transparent 70%);
 }
 
 /* Círculo central del campo */
@@ -902,7 +902,7 @@ img { max-width: 100%; display: block; }
   top:            50%; left: 50%;
   transform:      translate(-50%,-50%);
   width:          340px; height: 340px;
-  border:         1.5px solid rgba(240,192,64,.08);
+  border:         1.5px solid rgba(0,230,118,.08);
   border-radius:  50%;
 }
 
@@ -923,7 +923,7 @@ img { max-width: 100%; display: block; }
   font-size:     40px;
   color:         var(--color-gold);
   margin:        0 auto 24px;
-  box-shadow:    0 8px 32px rgba(139,0,0,.5);
+  box-shadow:    0 8px 32px rgba(0,200,83,.5);
   letter-spacing: 2px;
   position:      relative;
 }
@@ -932,7 +932,7 @@ img { max-width: 100%; display: block; }
   content:    '';
   position:   absolute;
   inset:      -2px;
-  border:     1px solid rgba(240,192,64,.3);
+  border:     1px solid rgba(0,230,118,.3);
   border-radius: calc(var(--radius-xl) + 2px);
 }
 
@@ -1092,7 +1092,7 @@ img { max-width: 100%; display: block; }
 .btn-login:hover {
   background: var(--color-primary-dark);
   transform:  translateY(-1px);
-  box-shadow: 0 6px 20px rgba(139,0,0,.35);
+  box-shadow: 0 6px 20px rgba(0,200,83,.35);
 }
 
 .btn-login:disabled {
@@ -1309,8 +1309,8 @@ img { max-width: 100%; display: block; }
   --shadow-lg: 0 8px 32px rgba(0,0,0,.6);
   --shadow-sidebar: 4px 0 24px rgba(0,0,0,.5);
 
-  --bg-sidebar-hover:  rgba(240,192,64,.06);
-  --bg-sidebar-active: rgba(240,192,64,.12);
+  --bg-sidebar-hover:  rgba(0,230,118,.06);
+  --bg-sidebar-active: rgba(0,230,118,.12);
 }
 
 [data-theme="dark"] #globalLoader {

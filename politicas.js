@@ -75,7 +75,7 @@ const openEditForm = async () => {
         <label class="form-label-bara">Texto de tratamiento de datos personales <span style="font-weight:400;color:var(--text-muted)">(se muestra al aceptar por primera vez)</span></label>
         <textarea id="editConsent" class="form-control-bara swal2-textarea" style="margin:0;min-height:110px">${consentText}</textarea>
       </div>`,
-    showCancelButton: true, confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', confirmButtonColor: '#8B0000',
+    showCancelButton: true, confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', confirmButtonColor: '#00C853',
     focusConfirm: false,
     preConfirm: () => ({
       policy: document.getElementById('editPolicy').value.trim(),

@@ -206,7 +206,7 @@ const renderAttendanceChart = async () => {
     type: 'bar',
     data: { labels, datasets: [{
       label: 'Asistentes', data,
-      backgroundColor: 'rgba(139,0,0,0.75)', borderColor: '#8B0000',
+      backgroundColor: 'rgba(0,200,83,0.75)', borderColor: '#00C853',
       borderWidth: 2, borderRadius: 8, borderSkipped: false
     }]},
     options: barOptions()
@@ -256,7 +256,7 @@ const renderCategoriesChart = async () => {
   const labels = cats.map(c => c.name);
   const inStudentCats = (s, catId) => (s.categoryIds && s.categoryIds.length) ? s.categoryIds.includes(catId) : s.categoryId === catId;
   const data   = cats.map(c => studs.filter(s => inStudentCats(s, c.id)).length);
-  const colors = cats.map(c => c.color || '#8B0000');
+  const colors = cats.map(c => c.color || '#00C853');
 
   chartCategories = new Chart(canvas, {
     type: 'bar',
@@ -273,8 +273,8 @@ const barOptions = () => ({
   responsive: true, maintainAspectRatio: false,
   plugins: {
     legend: { display: false },
-    tooltip: { backgroundColor:'rgba(13,27,62,.95)', titleColor:'#F0C040',
-               bodyColor:'#fff', borderColor:'#8B0000', borderWidth:1, padding:10 }
+    tooltip: { backgroundColor:'rgba(13,27,42,.95)', titleColor:'#00E676',
+               bodyColor:'#fff', borderColor:'#00C853', borderWidth:1, padding:10 }
   },
   scales: {
     x: { grid:{ color: cssVar('--border-color')+'33' }, ticks:{ color: cssVar('--text-secondary'), font:{size:11} } },

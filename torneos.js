@@ -268,7 +268,7 @@ const openTournamentForm = (existing = null) => {
           </label>`).join('') || '<p style="font-size:12.5px;color:var(--text-muted)">Sin entrenadores registrados.</p>'}
         </div>
       </div>`,
-    showCancelButton: true, confirmButtonText: existing ? 'Guardar' : 'Crear', cancelButtonText: 'Cancelar', confirmButtonColor: '#8B0000',
+    showCancelButton: true, confirmButtonText: existing ? 'Guardar' : 'Crear', cancelButtonText: 'Cancelar', confirmButtonColor: '#00C853',
     focusConfirm: false,
     preConfirm: () => {
       const name = document.getElementById('swalName').value.trim();

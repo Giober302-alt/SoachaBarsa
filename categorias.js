@@ -38,7 +38,7 @@ const render = (list) => {
 
   el.innerHTML = list.map(c => `
     <div class="card-bara" style="padding:18px;display:flex;align-items:center;gap:14px">
-      <div style="width:14px;height:44px;border-radius:6px;background:${c.color || '#8B0000'};flex-shrink:0"></div>
+      <div style="width:14px;height:44px;border-radius:6px;background:${c.color || '#00C853'};flex-shrink:0"></div>
       <div style="flex:1;min-width:0">
         <p style="font-weight:700;font-size:14px;color:var(--text-primary)">${escapeHtml(c.name || '—')}</p>
         <p style="font-size:12px;color:var(--text-muted)">ID: ${c.id}</p>
@@ -67,12 +67,12 @@ const openForm = (existing = null) => {
         <label class="form-label-bara">Nombre</label>
         <input id="swalName" class="form-control-bara swal2-input" style="margin:0 0 14px" placeholder="Ej: Sub-12" value="${existing ? escapeHtml(existing.name || '') : ''}">
         <label class="form-label-bara">Color</label>
-        <input id="swalColor" type="color" style="width:100%;height:42px;border:1.5px solid var(--border-color);border-radius:10px;cursor:pointer" value="${existing?.color || '#8B0000'}">
+        <input id="swalColor" type="color" style="width:100%;height:42px;border:1.5px solid var(--border-color);border-radius:10px;cursor:pointer" value="${existing?.color || '#00C853'}">
       </div>`,
     showCancelButton: true,
     confirmButtonText: existing ? 'Guardar' : 'Crear',
     cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#8B0000',
+    confirmButtonColor: '#00C853',
     focusConfirm: false,
     preConfirm: () => {
       const name = document.getElementById('swalName').value.trim();

@@ -63,7 +63,7 @@ export const checkDataPolicyConsent = async (profileOverride = null) => {
         <input type="checkbox" id="consentChk"> He leído y acepto el tratamiento de mis datos personales.
       </label>`,
     confirmButtonText: 'Aceptar y continuar',
-    confirmButtonColor: '#8B0000',
+    confirmButtonColor: '#00C853',
     allowOutsideClick: false, allowEscapeKey: false, showCancelButton: false,
     didOpen: () => {
       const btn = Swal.getConfirmButton();
@@ -212,7 +212,7 @@ export const showConfirm = async (title, text, confirmText = 'Confirmar') => {
   const result = await Swal.fire({
     title, text, icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#8B0000', cancelButtonColor: '#6c757d',
+    confirmButtonColor: '#00C853', cancelButtonColor: '#6c757d',
     confirmButtonText: confirmText, cancelButtonText: 'Cancelar',
     reverseButtons: true
   });

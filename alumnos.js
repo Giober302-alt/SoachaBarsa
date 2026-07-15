@@ -126,7 +126,7 @@ const openForm = (existing = null) => {
     showCancelButton: true,
     confirmButtonText: existing ? 'Guardar' : 'Crear',
     cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#8B0000',
+    confirmButtonColor: '#00C853',
     focusConfirm: false,
     preConfirm: () => {
       const displayName = document.getElementById('swalName').value.trim();

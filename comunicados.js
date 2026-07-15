@@ -79,7 +79,7 @@ const openForm = (existing = null) => {
     showCancelButton: true,
     confirmButtonText: existing ? 'Guardar' : 'Publicar',
     cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#8B0000',
+    confirmButtonColor: '#00C853',
     focusConfirm: false,
     preConfirm: async () => {
       const title = document.getElementById('swalTitle').value.trim();
