@@ -227,7 +227,7 @@ const renderTournaments = async (students, studentIds) => {
   const [tournaments, regs, callUpDocs] = await Promise.all([
     getCollection(COLLECTIONS.TOURNAMENTS),
     fetchByStudentIds('tournamentRegistrations', studentIds),
-    getCollection('callUps')
+    getCollection('callUps', [where('status', '==', 'approved')])
   ]);
   if (tournaments.length === 0) { el.innerHTML = `<p style="font-size:13px;color:var(--text-muted)">Sin torneos por ahora.</p>`; return; }
 
