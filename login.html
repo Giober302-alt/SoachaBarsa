@@ -170,7 +170,7 @@
   import { auth, db }              from './firebase-config.js';
   import { login, sendPasswordReset,
            onSessionChange }        from './auth.js';
-  import { applyTheme }            from './app.js';
+  import { applyTheme, checkDataPolicyConsent } from './app.js';
   import { createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
   import { collection, query, where, getDocs, doc, updateDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 
@@ -229,6 +229,7 @@
       Swal.fire({ toast:true, position:'top-end', icon:'success',
         title:`¡Bienvenido, ${result.profile?.displayName?.split(' ')[0] || ''}!`,
         showConfirmButton:false, timer:1200 });
+      await checkDataPolicyConsent(result.profile); // Habeas data: se muestra una sola vez por usuario, aquí mismo al ingresar.
       setTimeout(() => { window.location.href = destinationForRole(result.profile?.role); }, 900);
     } else {
       setLoading(false);

@@ -60,7 +60,12 @@ const init = async () => {
   renderGeneral();
   renderMedical();
   renderContact();
-  await Promise.all([renderDocuments(), renderPhotos(), renderPerformance(), renderPayments(), renderChangeLog()]);
+  try {
+    await Promise.all([renderDocuments(), renderPhotos(), renderPerformance(), renderPayments(), renderChangeLog()]);
+  } catch (err) {
+    console.error('[alumno-detalle] Error cargando secciones:', err);
+    toast('Algunas secciones no se pudieron cargar (revisa las reglas de Firestore).', 'warning', 5000);
+  }
   hideLoader();
 
   const requestedTab = params.get('tab');
@@ -455,8 +460,12 @@ const renderPerformance = async () => {
 
   document.getElementById('btnAddPerf')?.addEventListener('click', addPerformanceNote);
 
-  const snap = await getDocs(query(collection(db, 'performanceNotes'), where('studentId', '==', studentId), orderBy('createdAt', 'desc')));
-  const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  let list = [];
+  try {
+    const snap = await getDocs(query(collection(db, 'performanceNotes'), where('studentId', '==', studentId)));
+    list = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+  } catch (err) { console.error('[alumno-detalle] performanceNotes:', err); }
   const listEl = document.getElementById('perfList');
   if (list.length === 0) { listEl.innerHTML = `<div class="empty-widget"><i class="fas fa-chart-line"></i><p>Sin observaciones todavía.</p></div>`; return; }
 
@@ -575,8 +584,13 @@ const logChange = async (summary) => {
 const renderChangeLog = async () => {
   const el = document.getElementById('changeLogList');
   if (!el) return;
-  const snap = await getDocs(query(collection(db, 'studentChangeLog'), where('studentId', '==', studentId), orderBy('createdAt', 'desc')));
-  const list = snap.docs.map(d => ({ id: d.id, ...d.data() })).slice(0, 10);
+  let list = [];
+  try {
+    const snap = await getDocs(query(collection(db, 'studentChangeLog'), where('studentId', '==', studentId)));
+    list = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))
+      .slice(0, 10);
+  } catch (err) { console.error('[alumno-detalle] studentChangeLog:', err); }
   if (list.length === 0) { el.innerHTML = `<p style="font-size:12px;color:var(--text-muted)">Sin cambios registrados todavía.</p>`; return; }
   el.innerHTML = list.map(l => `<div style="padding:8px 0;border-bottom:1px solid var(--border-color)">
     <p style="font-size:12.5px">${escapeHtml(l.summary || '')}</p>

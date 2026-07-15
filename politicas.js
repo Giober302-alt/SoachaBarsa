@@ -22,27 +22,39 @@ let profile = null;
 
 const init = async () => {
   showLoader('Cargando políticas…');
-  profile = await requireAuth(null);
-  if (!profile) return;
-  initShell();
+  try {
+    profile = await requireAuth(null);
+    if (!profile) return;
+    initShell();
 
-  const isAdmin = profile.role === 'admin';
-  document.getElementById('btnEditPolicy').style.display = isAdmin ? 'inline-flex' : 'none';
-  document.getElementById('acceptanceLogCard').style.display = isAdmin ? 'block' : 'none';
-  document.getElementById('btnEditPolicy').addEventListener('click', openEditForm);
+    const isAdmin = profile.role === 'admin';
+    document.getElementById('btnEditPolicy').style.display = isAdmin ? 'inline-flex' : 'none';
+    document.getElementById('acceptanceLogCard').style.display = isAdmin ? 'block' : 'none';
+    document.getElementById('btnEditPolicy').addEventListener('click', openEditForm);
 
-  await loadContent();
-  if (isAdmin) await loadAcceptanceLog();
-  hideLoader();
+    await loadContent();
+    if (isAdmin) await loadAcceptanceLog();
+  } catch (err) {
+    console.error('[Políticas] Error de inicialización:', err);
+    document.getElementById('policyContent').textContent = 'No se pudo cargar (revisa que firestore.rules esté publicado). ' + (err.code || err.message || '');
+  } finally {
+    hideLoader();
+  }
 };
 
 const loadContent = async () => {
-  const [policySnap, consentSnap] = await Promise.all([
-    getDoc(doc(db, 'policies', 'academyPolicies')),
-    getDoc(doc(db, 'policies', 'dataConsent'))
-  ]);
-  document.getElementById('policyContent').textContent = policySnap.exists() ? (policySnap.data().content || DEFAULT_POLICY) : DEFAULT_POLICY;
-  document.getElementById('consentContent').textContent = consentSnap.exists() ? (consentSnap.data().content || DEFAULT_CONSENT) : DEFAULT_CONSENT;
+  try {
+    const [policySnap, consentSnap] = await Promise.all([
+      getDoc(doc(db, 'policies', 'academyPolicies')),
+      getDoc(doc(db, 'policies', 'dataConsent'))
+    ]);
+    document.getElementById('policyContent').textContent = policySnap.exists() ? (policySnap.data().content || DEFAULT_POLICY) : DEFAULT_POLICY;
+    document.getElementById('consentContent').textContent = consentSnap.exists() ? (consentSnap.data().content || DEFAULT_CONSENT) : DEFAULT_CONSENT;
+  } catch (err) {
+    console.error('[Políticas] loadContent:', err);
+    document.getElementById('policyContent').textContent = DEFAULT_POLICY;
+    document.getElementById('consentContent').textContent = DEFAULT_CONSENT;
+  }
 };
 
 const openEditForm = async () => {

@@ -42,8 +42,8 @@ export const initShell = () => {
 // fecha, hora, IP (mejor esfuerzo, servicio gratuito) y navegador.
 const DEFAULT_CONSENT_TEXT = `La Academia Barsa Soacha recopila y trata tus datos personales (y los de tu hijo/a, si aplica) únicamente para la gestión administrativa, deportiva y de comunicación con jugadores y acudientes, conforme a la Ley 1581 de 2012 y demás normas de protección de datos vigentes en Colombia. No compartimos tu información con terceros sin tu autorización.`;
 
-export const checkDataPolicyConsent = async () => {
-  const profile = getCurrentProfile();
+export const checkDataPolicyConsent = async (profileOverride = null) => {
+  const profile = profileOverride || getCurrentProfile();
   if (!profile || !window.Swal) return;
   try {
     const existing = await getDoc(doc(db, 'policyAcceptances', profile.id));
