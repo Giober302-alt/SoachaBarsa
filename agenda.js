@@ -110,17 +110,33 @@ const openForm = (existing = null) => {
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);margin-top:0">
           <input id="swalCancelled" type="checkbox" ${existing?.cancelled ? 'checked' : ''}> Marcar como cancelado
         </label>
+        ${!existing ? `
+        <hr style="margin:16px 0;border-color:var(--border-color)">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);margin-bottom:8px">
+          <input id="swalRepeat" type="checkbox"> Repetir semanalmente (agenda recurrente)
+        </label>
+        <div id="swalRepeatUntilWrap" style="display:none">
+          <label class="form-label-bara">Repetir hasta</label>
+          <input id="swalRepeatUntil" type="date" class="form-control-bara swal2-input" style="margin:0">
+        </div>` : ''}
       </div>`,
     showCancelButton: true,
     confirmButtonText: existing ? 'Guardar' : 'Crear',
     cancelButtonText: 'Cancelar',
     confirmButtonColor: '#8B0000',
     focusConfirm: false,
+    didOpen: () => {
+      document.getElementById('swalRepeat')?.addEventListener('change', (e) => {
+        document.getElementById('swalRepeatUntilWrap').style.display = e.target.checked ? 'block' : 'none';
+      });
+    },
     preConfirm: () => {
       const title = document.getElementById('swalTitle').value.trim();
       const date = document.getElementById('swalDate').value;
       const time = document.getElementById('swalTime').value || '00:00';
       if (!title || !date) { Swal.showValidationMessage('Completa título y fecha'); return false; }
+      const repeat = document.getElementById('swalRepeat')?.checked || false;
+      const repeatUntil = document.getElementById('swalRepeatUntil')?.value || null;
       return {
         title,
         type: document.getElementById('swalType').value,
@@ -130,21 +146,37 @@ const openForm = (existing = null) => {
         uniform: document.getElementById('swalUniform').value,
         notes: document.getElementById('swalNotes').value.trim(),
         cancelled: document.getElementById('swalCancelled').checked,
-        startTime: Timestamp.fromDate(new Date(`${date}T${time}:00`))
+        startTime: Timestamp.fromDate(new Date(`${date}T${time}:00`)),
+        _date: date, _time: time, _repeat: repeat, _repeatUntil: repeatUntil
       };
     }
   }).then(async (res) => {
     if (!res.isConfirmed) return;
+    const { _date, _time, _repeat, _repeatUntil, ...eventData } = res.value;
     if (existing) {
-      await updateDocument(COLLECTIONS.SCHEDULES, existing.id, res.value);
+      await updateDocument(COLLECTIONS.SCHEDULES, existing.id, eventData);
       toast('Evento actualizado', 'success');
-      notify({ audience: 'parents', title: res.value.cancelled ? 'Entrenamiento cancelado' : 'Cambio en la agenda', body: `${res.value.title} · ${UNIFORM_LABEL[res.value.uniform] || ''}` });
-      notify({ audience: 'coaches', title: res.value.cancelled ? 'Entrenamiento cancelado' : 'Cambio en la agenda', body: `${res.value.title}` });
+      notify({ audience: 'parents', title: eventData.cancelled ? 'Entrenamiento cancelado' : 'Cambio en la agenda', body: `${eventData.title} · ${UNIFORM_LABEL[eventData.uniform] || ''}` });
+      notify({ audience: 'coaches', title: eventData.cancelled ? 'Entrenamiento cancelado' : 'Cambio en la agenda', body: `${eventData.title}` });
+    } else if (_repeat && _repeatUntil) {
+      const dates = [];
+      let d = new Date(`${_date}T00:00:00`);
+      const end = new Date(`${_repeatUntil}T00:00:00`);
+      while (d <= end) { dates.push(new Date(d)); d.setDate(d.getDate() + 7); }
+      showLoader(`Creando ${dates.length} eventos…`);
+      for (const dt of dates) {
+        const iso = dt.toISOString().slice(0, 10);
+        await createDocument(COLLECTIONS.SCHEDULES, { ...eventData, startTime: Timestamp.fromDate(new Date(`${iso}T${_time}:00`)) });
+      }
+      hideLoader();
+      toast(`Agenda recurrente creada: ${dates.length} eventos`, 'success');
+      notify({ audience: 'parents', title: 'Nueva agenda recurrente', body: `${eventData.title} · ${dates.length} sesiones · Uniforme: ${UNIFORM_LABEL[eventData.uniform] || ''}` });
+      notify({ audience: 'coaches', title: 'Nueva agenda recurrente', body: `${eventData.title} · ${dates.length} sesiones` });
     } else {
-      await createDocument(COLLECTIONS.SCHEDULES, res.value);
+      await createDocument(COLLECTIONS.SCHEDULES, eventData);
       toast('Evento creado', 'success');
-      notify({ audience: 'parents', title: 'Nuevo evento en la agenda', body: `${res.value.title} · ${res.value.venue || ''} · Uniforme: ${UNIFORM_LABEL[res.value.uniform] || ''}` });
-      notify({ audience: 'coaches', title: 'Nuevo evento en la agenda', body: `${res.value.title} · ${res.value.venue || ''}` });
+      notify({ audience: 'parents', title: 'Nuevo evento en la agenda', body: `${eventData.title} · ${eventData.venue || ''} · Uniforme: ${UNIFORM_LABEL[eventData.uniform] || ''}` });
+      notify({ audience: 'coaches', title: 'Nuevo evento en la agenda', body: `${eventData.title} · ${eventData.venue || ''}` });
     }
   });
 };

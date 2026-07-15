@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Torneos — Barsa Soacha Academy</title>
+  <title>Políticas de la Academia — Barsa Soacha Academy</title>
   <link rel="icon" type="image/svg+xml" href="./logo-barsa.svg">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -168,13 +168,30 @@
     </header>
 
     <!-- Cuerpo del dashboard -->
-    <main class="page-body" id="torneosPage">
+    <main class="page-body" id="alumnosPage">
 
       <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
-        <div><h1 class="greeting-text">Torneos</h1><p class="date-text">Inscripción, aceptación y seguimiento</p></div>
-        <button class="btn-primary-bara" id="btnNewTournament"><i class="fas fa-plus"></i> Nuevo torneo</button>
+        <div>
+          <h1 class="greeting-text">Políticas de la Academia</h1>
+          <p class="date-text">Reglamento y tratamiento de datos — consulta para todos los perfiles</p>
+        </div>
+        <button class="btn-primary-bara" id="btnEditPolicy" style="display:none"><i class="fas fa-pen"></i> Editar políticas</button>
       </div>
-      <section aria-label="Torneos"><div id="tournamentsContainer"><div class="skeleton-card"></div></div></section>
+
+      <div class="card-bara" style="padding:24px;margin-bottom:20px">
+        <h2 style="font-size:16px;font-weight:700;margin-bottom:12px"><i class="fas fa-scroll"></i> Reglamento y políticas de la academia</h2>
+        <div id="policyContent" style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap;line-height:1.6">Cargando…</div>
+      </div>
+
+      <div class="card-bara" style="padding:24px;margin-bottom:20px">
+        <h2 style="font-size:16px;font-weight:700;margin-bottom:12px"><i class="fas fa-shield-halved"></i> Tratamiento de datos personales</h2>
+        <div id="consentContent" style="font-size:14px;color:var(--text-secondary);white-space:pre-wrap;line-height:1.6">Cargando…</div>
+      </div>
+
+      <div class="card-bara" id="acceptanceLogCard" style="padding:24px;display:none">
+        <h2 style="font-size:16px;font-weight:700;margin-bottom:12px"><i class="fas fa-list-check"></i> Registro de aceptaciones (solo administradores)</h2>
+        <div id="acceptanceLog"><div class="skeleton-card"></div></div>
+      </div>
 </main>
   </div>
 </div>
@@ -191,7 +208,7 @@
 
 <!-- Módulo principal — RUTA PLANA -->
 <script type="module">
-  import './torneos.js';
+  import './politicas.js';
 </script>
 
 </body>

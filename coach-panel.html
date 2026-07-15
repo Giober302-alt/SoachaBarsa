@@ -36,6 +36,7 @@
     <div style="display:flex;gap:10px;align-items:center">
       <a href="./asistencia.html" class="btn-primary-bara"><i class="fas fa-clipboard-check"></i> Pasar asistencia</a>
       <a href="./torneos.html" class="btn-outline-bara"><i class="fas fa-trophy"></i> Torneos</a>
+      <a href="./politicas.html" class="btn-outline-bara"><i class="fas fa-file-shield"></i></a>
       <button class="nav-action-btn" id="logoutBtn" aria-label="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>
     </div>
   </div>
@@ -60,13 +61,18 @@
         <input id="attDateInput" type="date" class="form-control-bara">
       </div>
       <button class="btn-outline-bara" id="attLoadBtn"><i class="fas fa-rotate"></i> Cargar</button>
-      <button class="btn-primary-bara" id="attSaveBtn" style="margin-left:auto"><i class="fas fa-check"></i> Guardar</button>
+      <div style="display:flex;gap:8px;margin-left:auto;flex-wrap:wrap">
+        <button class="btn-outline-bara" id="attAllPresentBtn" style="color:#198754;border-color:#198754"><i class="fas fa-check-double"></i> Todos presentes</button>
+        <button class="btn-outline-bara" id="attAllAbsentBtn" style="color:#dc3545;border-color:#dc3545"><i class="fas fa-xmark"></i> Todos ausentes</button>
+        <button class="btn-primary-bara" id="attSaveBtn"><i class="fas fa-check"></i> Guardar</button>
+      </div>
     </div>
   </div>
   <div id="attRoster"><div class="skeleton-card"></div></div>
   <div id="coachWaNotify"></div>
 
-  <p class="coach-section-title"><i class="fas fa-users"></i> Alumnos activos</p>
+  <p class="coach-section-title"><i class="fas fa-chart-line"></i> Dashboard de mis jugadores</p>
+  <p style="font-size:12px;color:var(--text-muted);margin:-6px 0 12px">Asistencia (últimos 30 días), estado de pago y calificación del entrenamiento.</p>
   <div id="coachStudents"><div class="skeleton-card"></div></div>
 </div>
 

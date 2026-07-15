@@ -20,10 +20,13 @@ const STATUSES = [
   { key: 'excused', label: 'Excusa',   color: '#0dcaf0' }
 ];
 
+let currentProfile = null;
+
 const init = async () => {
   showLoader('Cargando…');
   const profile = await requireAuth('coach');
   if (!profile) return;
+  currentProfile = profile;
   initShell();
 
   categories = await getCollection(COLLECTIONS.CATEGORIES);
@@ -34,6 +37,8 @@ const init = async () => {
   document.getElementById('dateInput').value = new Date().toISOString().slice(0, 10);
   document.getElementById('loadBtn').addEventListener('click', loadRoster);
   document.getElementById('saveBtn').addEventListener('click', saveAttendance);
+  document.getElementById('allPresentBtn').addEventListener('click', () => markAll('arrived'));
+  document.getElementById('allAbsentBtn').addEventListener('click', () => markAll('absent'));
 
   hideLoader();
   await loadRoster();
@@ -85,21 +90,31 @@ const renderRoster = (existing) => {
   </div></div>`;
 };
 
+const markAll = (statusKey) => {
+  students.forEach(s => {
+    const input = document.querySelector(`input[name="att_${s.id}"][value="${statusKey}"]`);
+    if (input) input.checked = true;
+  });
+  toast(`Marcados todos como "${STATUS_LABEL_ES[statusKey]}" — revisa y guarda`, 'info', 2500);
+};
+
 const STATUS_LABEL_ES = { arrived: 'Presente', late: 'Tarde', absent: 'Ausente', excused: 'Excusa' };
 
-const saveAttendance = async () => {
+const saveAttendance = async (profile) => {
   const dateStr = document.getElementById('dateInput').value;
   if (!dateStr) { toast('Elige una fecha', 'warning'); return; }
   const btn = document.getElementById('saveBtn');
   btn.disabled = true;
   let count = 0;
   const waList = [];
+  const nowStr = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
   for (const s of students) {
     const checked = document.querySelector(`input[name="att_${s.id}"]:checked`);
     if (!checked) continue;
     await setDoc(doc(db, COLLECTIONS.ATTENDANCE, `${dateStr}_${s.id}`), {
       date: dateStr, studentId: s.id, studentName: s.displayName || '',
-      status: checked.value, updatedAt: serverTimestamp()
+      status: checked.value, recordedBy: currentProfile?.displayName || currentProfile?.email || '',
+      recordedAt: serverTimestamp(), recordedAtTime: nowStr, updatedAt: serverTimestamp()
     });
     count++;
     if (s.parentEmail) {

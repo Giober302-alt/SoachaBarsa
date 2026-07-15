@@ -7,7 +7,7 @@ import { requireAuth } from './auth.js';
 import { initShell, toast, showConfirm, hideLoader, showLoader, getCollection, formatDate } from './app.js';
 import { COLLECTIONS, db } from './firebase-config.js';
 import {
-  doc, collection, query, where, orderBy, getDocs, addDoc, updateDoc, deleteDoc,
+  doc, getDoc, setDoc, collection, query, where, orderBy, getDocs, addDoc, updateDoc, deleteDoc,
   Timestamp, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 import { notify } from './notifications.js';
@@ -28,7 +28,7 @@ const init = async () => {
   if (!profile) return;
   initShell();
 
-  document.getElementById('btnNewTournament')?.addEventListener('click', () => openForm());
+  document.getElementById('btnNewTournament')?.addEventListener('click', () => openTournamentForm());
   if (!['admin', 'coordinator'].includes(profile.role)) document.getElementById('btnNewTournament')?.remove();
 
   [categories, coaches, students] = await Promise.all([
@@ -89,6 +89,9 @@ const render = () => {
         <p style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Inscripciones</p>
         <div id="regs-${t.id}"><div class="skeleton-row"><div class="sk-circle"></div><div class="sk-text"><div class="sk-line w-60"></div></div></div></div>
 
+        <p style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin:20px 0 8px">Convocatoria</p>
+        <div id="callup-${t.id}"><div class="skeleton-row"><div class="sk-circle"></div><div class="sk-text"><div class="sk-line w-60"></div></div></div></div>
+
         <p style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin:20px 0 8px">Seguimiento</p>
         ${canManage(t) ? `<div style="display:flex;gap:8px;margin-bottom:12px">
           <input id="update-input-${t.id}" class="form-control-bara" placeholder="Escribe una actualización (resultado, avance, logística)…">
@@ -103,11 +106,11 @@ const render = () => {
     const id = h.dataset.toggle;
     openId = openId === id ? null : id;
     render();
-    if (openId === id) { loadRegistrations(id); loadUpdates(id); }
+    if (openId === id) { loadRegistrations(id); loadUpdates(id); loadCallUp(id); }
   }));
   el.querySelectorAll('[data-edit-t]').forEach(btn => btn.addEventListener('click', (e) => {
     e.stopPropagation();
-    openForm(tournaments.find(t => t.id === btn.dataset.editT));
+    openTournamentForm(tournaments.find(t => t.id === btn.dataset.editT));
   }));
   el.querySelectorAll('[data-delete-t]').forEach(btn => btn.addEventListener('click', async (e) => {
     e.stopPropagation();
@@ -116,7 +119,7 @@ const render = () => {
   }));
   el.querySelectorAll('[data-add-update]').forEach(btn => btn.addEventListener('click', () => addUpdate(btn.dataset.addUpdate)));
 
-  if (openId) { loadRegistrations(openId); loadUpdates(openId); }
+  if (openId) { loadRegistrations(openId); loadUpdates(openId); loadCallUp(openId); }
 };
 
 const field = (label, value) => `<div><p style="font-size:11px;color:var(--text-muted);text-transform:uppercase">${label}</p><p style="font-size:13.5px;font-weight:600;margin-top:2px">${escapeHtml(String(value))}</p></div>`;
@@ -179,8 +182,62 @@ const addUpdate = async (tournamentId) => {
   });
 };
 
-// ─── Crear/editar torneo ────────────────────────────────────────────────────
-const openForm = (existing = null) => {
+// ─── Convocatoria (call-ups) ────────────────────────────────────────────────
+// El entrenador propone la lista de convocados; el admin/coordinador la
+// aprueba antes de publicarla. Los padres solo ven la lista ya aprobada
+// (ver renderTournaments en portal-padres.js).
+const CALLUP_STATUS_LABEL = { proposed: 'Propuesta \u2014 pendiente de aprobaci\u00f3n', approved: 'Aprobada y publicada' };
+
+const loadCallUp = async (tournamentId) => {
+  const el = document.getElementById(`callup-${tournamentId}`);
+  if (!el) return;
+  const t = tournaments.find(x => x.id === tournamentId);
+  const snap = await getDoc(doc(db, 'callUps', tournamentId));
+  const callUp = snap.exists() ? snap.data() : null;
+  const eligible = t.categoryId ? students.filter(s => (s.categoryIds || (s.categoryId ? [s.categoryId] : [])).includes(t.categoryId)) : students;
+  const selectedIds = callUp?.studentIds || [];
+  const manager = canManage(t);
+
+  if (!manager) {
+    if (!callUp) { el.innerHTML = `<p style=\"font-size:13px;color:var(--text-muted)\">A\u00fan no hay convocatoria publicada.</p>`; return; }
+    el.innerHTML = `<span class=\"badge-status ${callUp.status === 'approved' ? 'badge-paid' : 'badge-pending'}\" style=\"margin-bottom:10px;display:inline-block\">${CALLUP_STATUS_LABEL[callUp.status]}</span>
+      ${callUp.status === 'approved' ? `<div style=\"display:flex;flex-wrap:wrap;gap:6px\">${eligible.filter(s => selectedIds.includes(s.id)).map(s => `<span class=\"badge-status badge-arrived\">${escapeHtml(s.displayName)}</span>`).join('') || '<span style=\"font-size:12.5px;color:var(--text-muted)\">Sin jugadores convocados.</span>'}</div>` : ''}`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div style=\"border:1.5px solid var(--border-color);border-radius:10px;padding:8px 14px;max-height:180px;overflow-y:auto;margin-bottom:10px\">
+      ${eligible.map(s => `<label style=\"display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px\">
+        <input type=\"checkbox\" class=\"callupChk-${tournamentId}\" value=\"${s.id}\" ${selectedIds.includes(s.id) ? 'checked' : ''}> ${escapeHtml(s.displayName)}
+      </label>`).join('') || '<p style=\"font-size:12.5px;color:var(--text-muted)\">Sin jugadores en esta categor\u00eda.</p>'}
+    </div>
+    ${callUp ? `<span class=\"badge-status ${callUp.status === 'approved' ? 'badge-paid' : 'badge-pending'}\" style=\"margin-bottom:10px;display:inline-block\">${CALLUP_STATUS_LABEL[callUp.status]}</span>` : ''}
+    <div style=\"display:flex;gap:8px;flex-wrap:wrap\">
+      <button class=\"btn-outline-bara\" data-propose-callup=\"${tournamentId}\"><i class=\"fas fa-clipboard-list\"></i> Guardar propuesta</button>
+      ${['admin', 'coordinator'].includes(profile.role) ? `<button class=\"btn-primary-bara\" data-approve-callup=\"${tournamentId}\"><i class=\"fas fa-check\"></i> Aprobar y publicar</button>` : ''}
+    </div>`;
+
+  document.querySelector(`[data-propose-callup=\"${tournamentId}\"]`)?.addEventListener('click', () => saveCallUp(tournamentId, 'proposed'));
+  document.querySelector(`[data-approve-callup=\"${tournamentId}\"]`)?.addEventListener('click', () => saveCallUp(tournamentId, 'approved'));
+};
+
+const saveCallUp = async (tournamentId, status) => {
+  const t = tournaments.find(x => x.id === tournamentId);
+  const studentIds = Array.from(document.querySelectorAll(`.callupChk-${tournamentId}:checked`)).map(el => el.value);
+  await setDoc(doc(db, 'callUps', tournamentId), {
+    tournamentId, categoryId: t.categoryId || null, studentIds, status,
+    proposedBy: profile.displayName || '', updatedAt: serverTimestamp()
+  }, { merge: true });
+  toast(status === 'approved' ? 'Convocatoria aprobada y publicada' : 'Propuesta de convocatoria guardada', 'success');
+  if (status === 'approved') {
+    const calledStudents = students.filter(s => studentIds.includes(s.id) && s.parentEmail);
+    calledStudents.forEach(s => notify({ parentEmail: s.parentEmail, title: `Convocatoria: ${t.name}`, body: `${s.displayName} fue convocado(a).` }));
+  }
+  loadCallUp(tournamentId);
+};
+
+
+const openTournamentForm = (existing = null) => {
   const dateStr = existing?.date ? toDate(existing.date).toISOString().slice(0, 10) : '';
   Swal.fire({
     title: existing ? 'Editar torneo' : 'Nuevo torneo',

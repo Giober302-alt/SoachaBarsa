@@ -20,6 +20,8 @@ const init = async () => {
   initShell();
 
   document.getElementById('btnNewStudent')?.addEventListener('click', () => openForm());
+  document.getElementById('btnImportCsv')?.addEventListener('click', () => document.getElementById('csvFileInput').click());
+  document.getElementById('csvFileInput')?.addEventListener('change', handleCsvImport);
 
   categories = await getCollection(COLLECTIONS.CATEGORIES);
 
@@ -155,5 +157,64 @@ const openForm = (existing = null) => {
 };
 
 const escapeHtml = (s = '') => s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+// ─── Carga masiva por CSV ───────────────────────────────────────────────────
+// Columnas esperadas (con encabezado, separadas por coma):
+// nombre,tipoDocumento,numeroDocumento,fechaNacimiento(AAAA-MM-DD),categorias(separadas por ;),correoPadre,telefonoPadre
+const parseCsv = (text) => {
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (lines.length < 2) return [];
+  const rows = lines.slice(1);
+  return rows.map(line => {
+    const cols = line.split(',').map(c => c.trim());
+    return {
+      displayName: cols[0] || '',
+      documentType: cols[1] || 'RC',
+      documentNumber: cols[2] || '',
+      birthDate: cols[3] || '',
+      categoryNames: (cols[4] || '').split(';').map(c => c.trim()).filter(Boolean),
+      parentEmail: (cols[5] || '').toLowerCase() || null,
+      parentPhone: cols[6] || null
+    };
+  }).filter(r => r.displayName);
+};
+
+const handleCsvImport = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const text = await file.text();
+  const rows = parseCsv(text);
+  if (rows.length === 0) {
+    toast('El archivo no tiene filas válidas. Revisa el formato.', 'warning');
+    e.target.value = '';
+    return;
+  }
+  const ok = await showConfirm(`¿Importar ${rows.length} alumno(s)?`, 'Se crearán como nuevos registros.', 'Importar');
+  e.target.value = '';
+  if (!ok) return;
+
+  showLoader(`Importando ${rows.length} alumnos…`);
+  let created = 0, errors = 0;
+  for (const row of rows) {
+    try {
+      const categoryIds = row.categoryNames
+        .map(name => categories.find(c => c.name.toLowerCase() === name.toLowerCase())?.id)
+        .filter(Boolean);
+      const birth = row.birthDate ? new Date(row.birthDate + 'T00:00:00') : null;
+      await createDocument(COLLECTIONS.STUDENTS, {
+        displayName: row.displayName,
+        documentType: row.documentType,
+        documentNumber: row.documentNumber,
+        categoryIds, categoryId: null,
+        birthDate: birth && !isNaN(birth) ? Timestamp.fromDate(birth) : null,
+        parentEmail: row.parentEmail, parentPhone: row.parentPhone,
+        active: true
+      });
+      created++;
+    } catch (err) { console.error('[Import CSV]', err); errors++; }
+  }
+  hideLoader();
+  toast(`Importación completa: ${created} creados${errors ? `, ${errors} con error` : ''}`, errors ? 'warning' : 'success', 5000);
+};
 
 document.addEventListener('DOMContentLoaded', init);

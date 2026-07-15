@@ -4,10 +4,14 @@
  *              Solo su agenda, asistencia y el listado de alumnos.
  */
 import { requireAuth } from './auth.js';
-import { initShell, toast, getCollection, getGreeting } from './app.js';
+import { initShell, toast, getCollection, getGreeting, formatDate } from './app.js';
 import { COLLECTIONS, db } from './firebase-config.js';
-import { Timestamp, collection, query, where, getDocs, doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
+import { Timestamp, collection, query, where, getDocs, doc, setDoc, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 import { renderNotificationBell, notify, waDirectUrl } from './notifications.js';
+
+const PERF_CATEGORIES = ['Fortaleza', 'Por mejorar', 'Objetivo', 'Observación'];
+const PAY_STATUS_LABEL = { paid: 'Al día', pending: 'Pendiente', overdue: 'Vencido' };
+const PAY_DOT = { paid: '🟢', pending: '🟡', overdue: '🔴' };
 
 const STATUSES = [
   { key: 'arrived', label: 'Presente', color: '#198754' },
@@ -18,13 +22,16 @@ const STATUSES = [
 const STATUS_LABEL_ES = { arrived: 'Presente', late: 'Tarde', absent: 'Ausente', excused: 'Excusa' };
 let allCategories = [];
 let allStudents = [];
+let coachProfile = null;
 
 const init = async () => {
   const profile = await requireAuth('coach');
   if (!profile) return;
+  coachProfile = profile;
   initShell();
 
   document.getElementById('coachGreeting').textContent = getGreeting(profile.displayName);
+  document.getElementById('coachGreeting').dataset.name = profile.displayName || '';
   renderNotificationBell('coachNotifs', { role: 'coach', email: profile.email });
 
   const [categories, students, schedules] = await Promise.all([
@@ -33,8 +40,13 @@ const init = async () => {
     getCollection(COLLECTIONS.SCHEDULES)
   ]);
 
+  const [attendanceAll, paymentsAll] = await Promise.all([
+    getCollection(COLLECTIONS.ATTENDANCE),
+    getCollection(COLLECTIONS.PAYMENTS)
+  ]);
+
   renderAgenda(schedules);
-  renderStudents(students, categories);
+  renderStudents(students, categories, attendanceAll, paymentsAll);
 
   allCategories = categories;
   allStudents = students;
@@ -44,6 +56,8 @@ const init = async () => {
   document.getElementById('attDateInput').value = new Date().toISOString().slice(0, 10);
   document.getElementById('attLoadBtn').addEventListener('click', loadAttRoster);
   document.getElementById('attSaveBtn').addEventListener('click', saveAttRoster);
+  document.getElementById('attAllPresentBtn').addEventListener('click', () => markAllAtt('arrived'));
+  document.getElementById('attAllAbsentBtn').addEventListener('click', () => markAllAtt('absent'));
   await loadAttRoster();
 };
 
@@ -76,17 +90,27 @@ const loadAttRoster = async () => {
   </tbody></table></div></div>`;
 };
 
+const markAllAtt = (statusKey) => {
+  rosterStudents.forEach(s => {
+    const input = document.querySelector(`input[name="coachAtt_${s.id}"][value="${statusKey}"]`);
+    if (input) input.checked = true;
+  });
+  toast(`Marcados todos como "${STATUS_LABEL_ES[statusKey]}" — revisa y guarda`, 'info', 2500);
+};
+
 const saveAttRoster = async () => {
   const dateStr = document.getElementById('attDateInput').value;
   if (!dateStr) { toast('Elige una fecha', 'warning'); return; }
   let count = 0;
   const waList = [];
+  const nowStr = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
   for (const s of rosterStudents) {
     const checked = document.querySelector(`input[name="coachAtt_${s.id}"]:checked`);
     if (!checked) continue;
     await setDoc(doc(db, COLLECTIONS.ATTENDANCE, `${dateStr}_${s.id}`), {
       date: dateStr, studentId: s.id, studentName: s.displayName || '',
-      status: checked.value, updatedAt: serverTimestamp()
+      status: checked.value, recordedBy: coachProfile?.displayName || coachProfile?.email || '',
+      recordedAt: serverTimestamp(), recordedAtTime: nowStr, updatedAt: serverTimestamp()
     });
     count++;
     if (s.parentEmail) {
@@ -133,7 +157,7 @@ const renderAgenda = (schedules) => {
     </div>`).join('');
 };
 
-const renderStudents = (students, categories) => {
+const renderStudents = (students, categories, attendanceAll, paymentsAll) => {
   const el = document.getElementById('coachStudents');
   const catNames = (s) => {
     const ids = (s.categoryIds && s.categoryIds.length) ? s.categoryIds : (s.categoryId ? [s.categoryId] : []);
@@ -144,18 +168,99 @@ const renderStudents = (students, categories) => {
     el.innerHTML = `<div class="empty-widget"><i class="fas fa-users"></i><p>Sin alumnos registrados todavía.</p></div>`;
     return;
   }
-  el.innerHTML = `<div class="card-bara"><div class="card-body-bara" style="padding:0">
-    <table style="width:100%;border-collapse:collapse">
+
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+
+  el.innerHTML = `<div class="card-bara" style="overflow-x:auto"><div class="card-body-bara" style="padding:0">
+    <table style="width:100%;border-collapse:collapse;min-width:640px">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border-color)">
+          <th style="padding:10px 20px;text-align:left;font-size:11.5px;color:var(--text-muted);text-transform:uppercase">Jugador</th>
+          <th style="padding:10px 20px;text-align:left;font-size:11.5px;color:var(--text-muted);text-transform:uppercase">% Asistencia (30d)</th>
+          <th style="padding:10px 20px;text-align:left;font-size:11.5px;color:var(--text-muted);text-transform:uppercase">Estado de pago</th>
+          <th style="padding:10px 20px;text-align:left;font-size:11.5px;color:var(--text-muted);text-transform:uppercase">Acciones</th>
+        </tr>
+      </thead>
       <tbody>
-        ${active.map(s => `
+        ${active.map(s => {
+          const att = attendanceAll.filter(a => a.studentId === s.id && a.date >= cutoffStr);
+          const pct = att.length ? Math.round((att.filter(a => ['arrived', 'late'].includes(a.status)).length / att.length) * 100) : null;
+          const pctColor = pct === null ? 'var(--text-muted)' : pct >= 80 ? '#198754' : pct >= 50 ? '#ffc107' : '#dc3545';
+          const pay = paymentsAll.filter(p => p.studentId === s.id).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+          const latest = pay[0]?.status;
+          return `
         <tr style="border-bottom:1px solid var(--border-color)">
-          <td style="padding:12px 20px;font-weight:600;font-size:13.5px">${escapeHtml(s.displayName || '—')}</td>
-          <td style="padding:12px 20px;font-size:13px;color:var(--text-secondary)">${escapeHtml(catNames(s))}</td>
-          <td style="padding:12px 20px;white-space:nowrap"><a href="./alumno-detalle.html?id=${s.id}" class="btn-outline-bara" style="padding:5px 10px"><i class="fas fa-id-card"></i></a></td>
-        </tr>`).join('')}
+          <td style="padding:12px 20px">
+            <p style="font-weight:600;font-size:13.5px">${escapeHtml(s.displayName || '—')}</p>
+            <p style="font-size:11.5px;color:var(--text-secondary)">${escapeHtml(catNames(s))}</p>
+          </td>
+          <td style="padding:12px 20px">
+            ${pct === null ? '<span style="font-size:12.5px;color:var(--text-muted)">Sin registros</span>' : `<span style="font-weight:700;font-size:14px;color:${pctColor}">${pct}%</span>`}
+          </td>
+          <td style="padding:12px 20px">
+            ${latest ? `<span style="font-size:13px">${PAY_DOT[latest] || ''} ${PAY_STATUS_LABEL[latest] || latest}</span>` : '<span style="font-size:12.5px;color:var(--text-muted)">Sin pagos</span>'}
+          </td>
+          <td style="padding:12px 20px;white-space:nowrap">
+            <button class="btn-outline-bara" style="padding:5px 10px;margin-right:6px" data-rate="${s.id}"><i class="fas fa-star"></i> Calificar</button>
+            <a href="./alumno-detalle.html?id=${s.id}" class="btn-outline-bara" style="padding:5px 10px"><i class="fas fa-id-card"></i></a>
+          </td>
+        </tr>`;
+        }).join('')}
       </tbody>
     </table>
   </div></div>`;
+
+  el.querySelectorAll('[data-rate]').forEach(btn => btn.addEventListener('click', () => openRatingForm(active.find(s => s.id === btn.dataset.rate))));
+};
+
+const STAR_HTML = (n) => Array.from({ length: 5 }, (_, i) => `<i class="fa-star ${i < n ? 'fas' : 'far'}" data-star="${i + 1}" style="cursor:pointer;color:${i < n ? 'var(--color-gold)' : 'var(--text-muted)'};font-size:22px;margin-right:4px"></i>`).join('');
+
+const openRatingForm = (student) => {
+  if (!student) return;
+  let rating = 0;
+  Swal.fire({
+    title: `Calificar a ${student.displayName}`,
+    html: `
+      <div style="text-align:left">
+        <label class="form-label-bara">Calificación del entrenamiento de hoy</label>
+        <div id="starPicker" style="margin:6px 0 14px">${STAR_HTML(0)}</div>
+        <label class="form-label-bara">Categoría de la retroalimentación</label>
+        <select id="perfCat" class="form-control-bara swal2-input" style="margin:0 0 12px">
+          ${PERF_CATEGORIES.map(c => `<option>${c}</option>`).join('')}
+        </select>
+        <label class="form-label-bara">Retroalimentación para el padre/madre</label>
+        <textarea id="perfText" class="form-control-bara swal2-textarea" style="margin:0" placeholder="Ej: Excelente actitud, mejoró el control del balón…"></textarea>
+      </div>`,
+    showCancelButton: true, confirmButtonText: 'Publicar', cancelButtonText: 'Cancelar', confirmButtonColor: '#8B0000',
+    focusConfirm: false,
+    didOpen: () => {
+      document.getElementById('starPicker').querySelectorAll('[data-star]').forEach(star => {
+        star.addEventListener('click', () => {
+          rating = Number(star.dataset.star);
+          document.getElementById('starPicker').innerHTML = STAR_HTML(rating);
+          document.getElementById('starPicker').querySelectorAll('[data-star]').forEach(s2 => s2.addEventListener('click', () => star.click()));
+        });
+      });
+    },
+    preConfirm: () => {
+      const text = document.getElementById('perfText').value.trim();
+      if (!text) { Swal.showValidationMessage('Escribe una retroalimentación'); return false; }
+      return { category: document.getElementById('perfCat').value, text, rating };
+    }
+  }).then(async (res) => {
+    if (!res.isConfirmed) return;
+    await addDoc(collection(db, 'performanceNotes'), {
+      studentId: student.id, category: res.value.category, text: res.value.text,
+      rating: res.value.rating, coachName: document.getElementById('coachGreeting').dataset.name || '',
+      createdAt: serverTimestamp()
+    });
+    if (student.parentEmail) {
+      const stars = res.value.rating ? ` ${'⭐'.repeat(res.value.rating)}` : '';
+      await notify({ parentEmail: student.parentEmail, title: `Retroalimentación de ${student.displayName}${stars}`, body: `${res.value.category}: ${res.value.text}` });
+    }
+    toast('Calificación y retroalimentación publicadas', 'success');
+  });
 };
 
 const escapeHtml = (s = '') => s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));

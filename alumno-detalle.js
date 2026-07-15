@@ -462,9 +462,12 @@ const renderPerformance = async () => {
 
   listEl.innerHTML = list.map(n => `
     <div class="card-bara" style="padding:14px 18px;margin-bottom:10px">
-      <span class="badge-status badge-excused">${escapeHtml(n.category || 'Observación')}</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <span class="badge-status badge-excused">${escapeHtml(n.category || 'Observación')}</span>
+        ${n.rating ? `<span style="color:var(--color-gold);font-size:14px">${'★'.repeat(n.rating)}${'☆'.repeat(5 - n.rating)}</span>` : ''}
+      </div>
       <p style="font-size:13.5px;margin-top:8px;white-space:pre-wrap">${escapeHtml(n.text || '')}</p>
-      <p style="font-size:11px;color:var(--text-muted);margin-top:6px">${formatDate(n.createdAt)}</p>
+      <p style="font-size:11px;color:var(--text-muted);margin-top:6px">${escapeHtml(n.coachName || '')} · ${formatDate(n.createdAt)}</p>
     </div>`).join('');
 };
 

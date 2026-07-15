@@ -4,7 +4,7 @@
  *              Resumen por hijo + enlace a la ficha completa (alumno-detalle.html).
  */
 import { requireAuth, logout } from './auth.js';
-import { getCollection, formatDate, formatCOP, getGreeting, applyTheme, AppState, toast } from './app.js';
+import { getCollection, formatDate, formatCOP, getGreeting, applyTheme, AppState, toast, checkDataPolicyConsent } from './app.js';
 import { COLLECTIONS, db } from './firebase-config.js';
 import { collection, query, where, getDocs, addDoc, doc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 import { renderNotificationBell } from './notifications.js';
@@ -17,6 +17,7 @@ const init = async () => {
   const profile = await requireAuth('parent');
   if (!profile) return;
   applyTheme(AppState.theme);
+  checkDataPolicyConsent();
 
   document.getElementById('parentGreeting').textContent = getGreeting(profile.displayName);
   document.getElementById('logoutLink').addEventListener('click', async (e) => {
@@ -72,6 +73,7 @@ const init = async () => {
   renderChildren(students, catName, coachName, attendance, payments);
   renderAnnouncements(announcements);
   renderTournaments(students, studentIds);
+  renderPerformanceByStudent(students, studentIds);
 };
 
 const fetchByStudentIds = async (colName, ids) => {
@@ -170,8 +172,33 @@ const renderChildren = (students, catName, coachName, attendance, payments) => {
             </span>
           </div>`).join('')}
         </div>`}
+
+      <div id="perf-${s.id}" style="margin-top:16px"></div>
     </div>`;
   }).join('');
+};
+
+const renderPerformanceByStudent = async (students, studentIds) => {
+  if (studentIds.length === 0) return;
+  const notes = await fetchByStudentIds('performanceNotes', studentIds);
+  for (const s of students) {
+    const el = document.getElementById(`perf-${s.id}`);
+    if (!el) continue;
+    const list = notes.filter(n => n.studentId === s.id).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)).slice(0, 4);
+    if (list.length === 0) continue;
+    el.innerHTML = `
+      <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:8px"><i class="fas fa-chart-line"></i> Rendimiento y retroalimentación</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${list.map(n => `<div class="card-bara" style="padding:12px 14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+            <span class="badge-status badge-excused">${escapeHtml(n.category || 'Observación')}</span>
+            ${n.rating ? `<span style="color:var(--color-gold);font-size:13px">${'★'.repeat(n.rating)}${'☆'.repeat(5 - n.rating)}</span>` : ''}
+          </div>
+          <p style="font-size:12.5px;margin-top:6px;white-space:pre-wrap">${escapeHtml(n.text || '')}</p>
+          <p style="font-size:10.5px;color:var(--text-muted);margin-top:4px">${escapeHtml(n.coachName || '')} · ${formatDate(n.createdAt)}</p>
+        </div>`).join('')}
+      </div>`;
+  }
 };
 
 const renderAnnouncements = (list) => {
@@ -197,14 +224,17 @@ const TSTATUS_BADGE = { pending: 'badge-pending', accepted: 'badge-paid', reject
 
 const renderTournaments = async (students, studentIds) => {
   const el = document.getElementById('parentTournaments');
-  const [tournaments, regs] = await Promise.all([
+  const [tournaments, regs, callUpDocs] = await Promise.all([
     getCollection(COLLECTIONS.TOURNAMENTS),
-    fetchByStudentIds('tournamentRegistrations', studentIds)
+    fetchByStudentIds('tournamentRegistrations', studentIds),
+    getCollection('callUps')
   ]);
   if (tournaments.length === 0) { el.innerHTML = `<p style="font-size:13px;color:var(--text-muted)">Sin torneos por ahora.</p>`; return; }
 
   const sorted = tournaments.sort((a, b) => toMillis(b.date) - toMillis(a.date));
-  el.innerHTML = sorted.map(t => `
+  el.innerHTML = sorted.map(t => {
+    const callUp = callUpDocs.find(c => c.tournamentId === t.id && c.status === 'approved');
+    return `
     <div class="card-bara" style="padding:16px 20px;margin-bottom:12px">
       <p style="font-weight:700;font-size:14px"><i class="fas fa-trophy" style="color:var(--color-gold);margin-right:6px"></i>${escapeHtml(t.name || '')}</p>
       <p style="font-size:12px;color:var(--text-muted);margin:4px 0 6px">${formatDate(t.date)} · ${escapeHtml(t.venue || '')}${t.callTime ? ' · Convocatoria: ' + escapeHtml(t.callTime) : ''}</p>
@@ -212,18 +242,23 @@ const renderTournaments = async (students, studentIds) => {
       <div style="display:flex;flex-direction:column;gap:8px">
         ${students.map(s => {
           const reg = regs.find(r => r.tournamentId === t.id && r.studentId === s.id);
-          return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;gap:8px">
+          const called = callUp?.studentIds?.includes(s.id);
+          return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;gap:8px;flex-wrap:wrap">
             <span>${escapeHtml(s.displayName)}</span>
-            ${reg
-              ? `<span style="display:flex;align-items:center;gap:8px">
-                  <span class="badge-status ${TSTATUS_BADGE[reg.status] || 'badge-pending'}">${TSTATUS_LABEL[reg.status] || reg.status}</span>
-                  ${['pending','accepted'].includes(reg.status) ? `<button class="btn-outline-bara" style="padding:4px 9px;font-size:11.5px;color:#dc3545;border-color:#dc3545" data-cancel="${reg.id}">Cancelar</button>` : ''}
-                </span>`
-              : `<button class="btn-outline-bara" style="padding:5px 10px" data-register="${t.id}|${s.id}">Inscribir</button>`}
+            <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              ${called ? `<span class="badge-status badge-arrived"><i class="fas fa-star"></i> Convocado</span>` : ''}
+              ${reg
+                ? `<span style="display:flex;align-items:center;gap:8px">
+                    <span class="badge-status ${TSTATUS_BADGE[reg.status] || 'badge-pending'}">${TSTATUS_LABEL[reg.status] || reg.status}</span>
+                    ${['pending','accepted'].includes(reg.status) ? `<button class="btn-outline-bara" style="padding:4px 9px;font-size:11.5px;color:#dc3545;border-color:#dc3545" data-cancel="${reg.id}">Cancelar</button>` : ''}
+                  </span>`
+                : `<button class="btn-outline-bara" style="padding:5px 10px" data-register="${t.id}|${s.id}">Inscribir</button>`}
+            </span>
           </div>`;
         }).join('')}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   el.querySelectorAll('[data-register]').forEach(btn => btn.addEventListener('click', async () => {
     const [tournamentId, studentId] = btn.dataset.register.split('|');

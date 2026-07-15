@@ -98,6 +98,10 @@
       </a>
 
       <span class="nav-section-label">Sistema</span>
+      <a href="./politicas.html" class="nav-link" data-page="politicas.html">
+        <span class="nav-icon"><i class="fas fa-file-shield"></i></span>
+        <span class="nav-label">Políticas</span>
+      </a>
       <a href="./usuarios.html" class="nav-link" data-page="usuarios.html">
         <span class="nav-icon"><i class="fas fa-user-shield"></i></span>
         <span class="nav-label">Usuarios</span>
@@ -172,6 +176,8 @@
           <p class="date-text">Listado y gestión de alumnos</p>
         </div>
         <button class="btn-primary-bara" id="btnNewStudent"><i class="fas fa-user-plus"></i> Nuevo alumno</button>
+        <button class="btn-outline-bara" id="btnImportCsv"><i class="fas fa-file-csv"></i> Importar CSV</button>
+        <input type="file" id="csvFileInput" accept=".csv" style="display:none">
       </div>
       <section aria-label="Alumnos">
         <div id="studentsContainer">

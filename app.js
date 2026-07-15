@@ -12,7 +12,7 @@ import { db, COLLECTIONS, ROLES }                   from './firebase-config.js';
 
 import {
   collection, query, where, orderBy, limit,
-  getDocs, getDoc, addDoc, updateDoc, deleteDoc,
+  getDocs, getDoc, addDoc, updateDoc, deleteDoc, setDoc,
   doc, serverTimestamp, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 
@@ -34,6 +34,57 @@ export const initShell = () => {
   renderUserBadge();
   highlightActiveNav();
   bindSidebarLinks();
+  checkDataPolicyConsent();
+};
+
+// ─── Consentimiento de tratamiento de datos personales ─────────────────────────────
+// Se muestra una sola vez por usuario (bloqueante) y queda registrado con
+// fecha, hora, IP (mejor esfuerzo, servicio gratuito) y navegador.
+const DEFAULT_CONSENT_TEXT = `La Academia Barsa Soacha recopila y trata tus datos personales (y los de tu hijo/a, si aplica) únicamente para la gestión administrativa, deportiva y de comunicación con jugadores y acudientes, conforme a la Ley 1581 de 2012 y demás normas de protección de datos vigentes en Colombia. No compartimos tu información con terceros sin tu autorización.`;
+
+export const checkDataPolicyConsent = async () => {
+  const profile = getCurrentProfile();
+  if (!profile || !window.Swal) return;
+  try {
+    const existing = await getDoc(doc(db, 'policyAcceptances', profile.id));
+    if (existing.exists()) return;
+  } catch (err) { console.error('[App] checkDataPolicyConsent:', err); return; }
+
+  let consentText = DEFAULT_CONSENT_TEXT;
+  try {
+    const policyDoc = await getDoc(doc(db, 'policies', 'dataConsent'));
+    if (policyDoc.exists() && policyDoc.data().content) consentText = policyDoc.data().content;
+  } catch (err) { /* usa el texto por defecto */ }
+
+  await Swal.fire({
+    title: 'Tratamiento de datos personales',
+    html: `<div style="text-align:left;max-height:260px;overflow-y:auto;font-size:13.5px;color:var(--text-secondary,#555);white-space:pre-wrap">${consentText}</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:16px;text-align:left">
+        <input type="checkbox" id="consentChk"> He leído y acepto el tratamiento de mis datos personales.
+      </label>`,
+    confirmButtonText: 'Aceptar y continuar',
+    confirmButtonColor: '#8B0000',
+    allowOutsideClick: false, allowEscapeKey: false, showCancelButton: false,
+    didOpen: () => {
+      const btn = Swal.getConfirmButton();
+      btn.disabled = true;
+      document.getElementById('consentChk').addEventListener('change', (e) => { btn.disabled = !e.target.checked; });
+    },
+    preConfirm: () => {
+      if (!document.getElementById('consentChk').checked) { Swal.showValidationMessage('Debes aceptar para continuar'); return false; }
+      return true;
+    }
+  });
+
+  let ip = null;
+  try { const r = await fetch('https://api.ipify.org?format=json'); ip = (await r.json()).ip; } catch (err) { /* sin IP si falla el servicio */ }
+
+  try {
+    await setDoc(doc(db, 'policyAcceptances', profile.id), {
+      email: profile.email || '', displayName: profile.displayName || '', role: profile.role || '',
+      ip, userAgent: navigator.userAgent, acceptedAt: serverTimestamp()
+    });
+  } catch (err) { console.error('[App] No se pudo registrar el consentimiento:', err); }
 };
 
 // ─── Tema ─────────────────────────────────────────────────────────────────────

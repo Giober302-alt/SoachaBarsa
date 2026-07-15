@@ -180,7 +180,11 @@
             <input id="dateInput" type="date" class="form-control-bara">
           </div>
           <button class="btn-outline-bara" id="loadBtn"><i class="fas fa-rotate"></i> Cargar</button>
-          <button class="btn-primary-bara" id="saveBtn" style="margin-left:auto"><i class="fas fa-check"></i> Guardar asistencia</button>
+          <div style="display:flex;gap:8px;margin-left:auto;flex-wrap:wrap">
+            <button class="btn-outline-bara" id="allPresentBtn" style="color:#198754;border-color:#198754"><i class="fas fa-check-double"></i> Todos presentes</button>
+            <button class="btn-outline-bara" id="allAbsentBtn" style="color:#dc3545;border-color:#dc3545"><i class="fas fa-xmark"></i> Todos ausentes</button>
+            <button class="btn-primary-bara" id="saveBtn"><i class="fas fa-check"></i> Guardar asistencia</button>
+          </div>
         </div>
       </div>
       <section aria-label="Lista de alumnos">

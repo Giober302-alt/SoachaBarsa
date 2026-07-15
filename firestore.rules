@@ -95,6 +95,10 @@ service cloud.firestore {
       allow create: if isCoordinator() || isSupervisor(request.resource.data.tournamentId);
       allow delete: if isCoordinator();
     }
+    match /callUps/{id} {
+      allow read:  if isStaff() || (myRole() == 'parent' && resource.data.status == 'approved');
+      allow write: if isCoordinator() || isSupervisor(id);
+    }
     match /schedules/{id} {
       allow read:  if isSignedIn();
       allow write: if isCoordinator();
@@ -146,6 +150,15 @@ service cloud.firestore {
     match /settings/{id} {
       allow read:  if isSignedIn();
       allow write: if isAdmin();
+    }
+    match /policies/{id} {
+      allow read:  if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /policyAcceptances/{uid} {
+      allow read:   if isSignedIn() && (request.auth.uid == uid || isStaff());
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow update, delete: if false;
     }
 
     match /{document=**} {
