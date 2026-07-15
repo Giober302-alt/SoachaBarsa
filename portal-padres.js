@@ -83,7 +83,7 @@ const fetchByStudentIds = async (colName, ids) => {
 };
 
 const UNIFORM_LABEL = { training: 'Entrenamiento', presentation: 'Presentación', goalkeeper: 'Arquero', tournament: 'Torneo', other: 'Otro' };
-const UNIFORM_COLOR = { training: '#0dcaf0', presentation: 'var(--color-gold)', goalkeeper: '#9c27b0', tournament: '#00C853', other: 'var(--text-muted)' };
+const UNIFORM_COLOR = { training: '#0dcaf0', presentation: 'var(--color-gold)', goalkeeper: '#9c27b0', tournament: '#8B0000', other: 'var(--text-muted)' };
 
 const renderUpcomingSchedules = async () => {
   const el = document.getElementById('parentAgenda');

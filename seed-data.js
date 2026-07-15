@@ -14,9 +14,9 @@ export const seedDemoData = async () => {
 
   // Categorías
   const categorias = [
-    { name: 'Sub-8',  color: '#00C853' },
-    { name: 'Sub-12', color: '#0D1B2A' },
-    { name: 'Sub-16', color: '#00E676' }
+    { name: 'Sub-8',  color: '#8B0000' },
+    { name: 'Sub-12', color: '#0D1B3E' },
+    { name: 'Sub-16', color: '#F0C040' }
   ];
   const catIds = [];
   for (const c of categorias) {

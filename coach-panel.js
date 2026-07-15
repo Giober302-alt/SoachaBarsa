@@ -232,7 +232,7 @@ const openRatingForm = (student) => {
         <label class="form-label-bara">Retroalimentación para el padre/madre</label>
         <textarea id="perfText" class="form-control-bara swal2-textarea" style="margin:0" placeholder="Ej: Excelente actitud, mejoró el control del balón…"></textarea>
       </div>`,
-    showCancelButton: true, confirmButtonText: 'Publicar', cancelButtonText: 'Cancelar', confirmButtonColor: '#00C853',
+    showCancelButton: true, confirmButtonText: 'Publicar', cancelButtonText: 'Cancelar', confirmButtonColor: '#8B0000',
     focusConfirm: false,
     didOpen: () => {
       document.getElementById('starPicker').querySelectorAll('[data-star]').forEach(star => {

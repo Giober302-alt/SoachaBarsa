@@ -32,7 +32,7 @@ const init = async () => {
 const toDate = (ts) => ts?.toDate ? ts.toDate() : new Date(ts || 0);
 
 const UNIFORM_LABEL = { training: 'Entrenamiento', presentation: 'Presentación', goalkeeper: 'Arquero', tournament: 'Torneo', other: 'Otro' };
-const UNIFORM_COLOR = { training: '#0dcaf0', presentation: 'var(--color-gold)', goalkeeper: '#9c27b0', tournament: '#00C853', other: 'var(--text-muted)' };
+const UNIFORM_COLOR = { training: '#0dcaf0', presentation: 'var(--color-gold)', goalkeeper: '#9c27b0', tournament: '#8B0000', other: 'var(--text-muted)' };
 
 const typeBadge = (t) => {
   const map = { Entrenamiento: 'badge-arrived', Partido: 'badge-pending', Reunión: 'badge-excused' };
@@ -123,7 +123,7 @@ const openForm = (existing = null) => {
     showCancelButton: true,
     confirmButtonText: existing ? 'Guardar' : 'Crear',
     cancelButtonText: 'Cancelar',
-    confirmButtonColor: '#00C853',
+    confirmButtonColor: '#8B0000',
     focusConfirm: false,
     didOpen: () => {
       document.getElementById('swalRepeat')?.addEventListener('change', (e) => {
