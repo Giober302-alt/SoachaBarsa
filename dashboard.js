@@ -179,17 +179,25 @@ const scheduleChartsRefresh = () => {
   chartsRefreshTimer = setTimeout(loadCharts, 800);
 };
 
+let isLoadingCharts = false;
 const loadCharts = async () => {
-  const results = await Promise.allSettled([renderAttendanceChart(), renderPaymentsChart(), renderCategoriesChart()]);
-  results.forEach((r, i) => {
-    if (r.status === 'rejected') console.error(`[Dashboard] Gráfica ${i} falló:`, r.reason);
-  });
+  if (isLoadingCharts) { scheduleChartsRefresh(); return; }
+  isLoadingCharts = true;
+  try {
+    const results = await Promise.allSettled([renderAttendanceChart(), renderPaymentsChart(), renderCategoriesChart()]);
+    results.forEach((r, i) => {
+      if (r.status === 'rejected') console.error(`[Dashboard] Gráfica ${i} falló:`, r.reason);
+    });
+  } finally {
+    isLoadingCharts = false;
+  }
 };
 
 const renderAttendanceChart = async () => {
   const canvas = document.getElementById('chartAttendance');
   if (!canvas || !window.Chart) return;
-  if (chartAttendance) { chartAttendance.destroy(); chartAttendance = null; }
+  Chart.getChart(canvas)?.destroy();
+  chartAttendance = null;
 
   const labels = [], data = [];
   const dias = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
@@ -222,7 +230,8 @@ const renderAttendanceChart = async () => {
 const renderPaymentsChart = async () => {
   const canvas = document.getElementById('chartPayments');
   if (!canvas || !window.Chart) return;
-  if (chartPayments) { chartPayments.destroy(); chartPayments = null; }
+  Chart.getChart(canvas)?.destroy();
+  chartPayments = null;
 
   const counts = { paid:0, pending:0, overdue:0 };
   try {
@@ -252,7 +261,8 @@ const renderPaymentsChart = async () => {
 const renderCategoriesChart = async () => {
   const canvas = document.getElementById('chartCategories');
   if (!canvas || !window.Chart) return;
-  if (chartCategories) { chartCategories.destroy(); chartCategories = null; }
+  Chart.getChart(canvas)?.destroy();
+  chartCategories = null;
 
   let cats = [], studs = [];
   try {
